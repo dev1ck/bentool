@@ -13,3 +13,11 @@
 - Notion에 #include <stdarg.h> 가변 인자 내용 추가
 
 ---
+
+# 2021/12/17 (금)
+- Notion에 perror와 WSAGetLastError(), FormatMessage() 함수에 대해 정리
+- Notion에 윈도우에서 ws2_32.lib 추가하는 방법 정리
+- Notion에 strerror() 정리
+- Notion에 socket에 대한 정의 정리
+
+---
