@@ -21,3 +21,18 @@
 - Notion에 socket에 대한 정의 정리
 
 ---
+
+# 2021/12/18 (토)
+- Notion에 read() 옵션 설명 정리
+- Notion에 write() 옵션 설명 정리
+- Notion에 send() 옵션 설명 정리
+- Notion에 sendto() 옵션 설명 정리
+- Notion에 recv() 옵션 설명 정리
+- Notion에 recvfrom() 옵션 설명 정리
+- Notion에 closesocket() 옵션 설명 정리
+- Notion에 WSAStartup() 옵션 설명 정리
+- Notion에 WSACleanup() 옵션 설명 정리
+- Notion에 getopt() 옵션 설명 정리
+- 기본 지식 내용 추가
+
+---
