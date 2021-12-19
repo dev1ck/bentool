@@ -36,3 +36,11 @@
 - 기본 지식 내용 추가
 
 ---
+
+# 2021/12/19 (일)
+- Notino에 리눅스에서 바이트 오더 확인 명령어 추가
+- Notion에 arpa/inet.h와 관련된 htonl, htons, ntohl, ntohs 함수들을 정리.
+- Notion에 inet_addr(), inet_aton(), inet_ntoa(), inet_netowrk(), inet_lnaof(), inet_netof(), inet_makeaddr() 함수들 정리.
+- Notino에 getsockname()과 geteername() 정리
+
+---
