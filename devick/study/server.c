@@ -26,15 +26,15 @@ int main(int argc, char *argv[])
     ss = socket(PF_INET, SOCK_STREAM, 0);
     memset(&sa, 0, sizeof(sa));
     sa.sin_family = AF_INET;
-    sa.sin_addr.s_addr = htonl(INADDR_ANY); //32비트 호스트 바이트 오더를 네트워크 바이트 오더로 변환
+    sa.sin_addr.s_addr = htonl(INADDR_ANY); //32비트 호스트 바이트 오더를 네트워크 바이트 오더로 변환 / INADDR_ANY : 시스템에 있는 모든 NIC로 부터의 전송을 받겠다
     sa.sin_port = htons(atoi(argv[1])); //입력 받은 문자를 정수로 변환 후 네트워크 바이트 순서로 변환
 
     bind(ss, (struct sockaddr*)&sa, sizeof(sa));
 
-    listen(ss,5);
+    listen(ss,5); //backlog = 대기큐
 
     cas = sizeof(ca);
-    cs = accept(ss,(struct sockaddr*)&ca, &cas);
+    cs = accept(ss,(struct sockaddr*)&ca, &cas); //대기큐에서 하나씩 꺼내와서 소켓번호 부여
 
     write(cs, message, sizeof(message));
     close(cs);
