@@ -45,4 +45,6 @@
 - 호스트 바이트 순서, 네트워크 바이트 순서 정리
 - sockaddr 구조체와 sockaddr_in 구조의 차이점 정리
 # 2021/1/2 (일 )
-
+- C 언어 unsigned,signed 정리
+- byteorder_convert ,inet_addr , inet_aton 클론코딩 및 주석작성
+- 문자열 정수변환 내용 정리
