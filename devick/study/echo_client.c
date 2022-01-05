@@ -1,0 +1,44 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#define BUF_SIZE 1024
+
+int main(int argc, char *argv[])
+{
+    int sock, str_len;
+    struct sockaddr_in sa;
+    char * message ="test";
+
+    sock=socket(PF_INET, SOCK_STREAM, 0);
+
+    memset(&sa,0,sizeof(sa));
+    sa.sin_family = AF_INET;
+    inet_aton(argv[1], &sa.sin_addr);
+    sa.sin_port=htons(atoi(argv[2]));
+
+    printf("Please wait\n");
+    if(connect(sock,(struct sockaddr*)&sa,sizeof(sa))!=-1)
+        printf("Success connected\n");
+
+    while(1)
+    {
+        //fgets(message, BUF_SIZE, stdin);
+        printf("test");
+        //fprintf("%s",message);
+        if(!strcmp(message, "q\n") || !strcmp(message,"Q\n"))
+        {
+            puts("Close socket");
+            close(sock);
+        }
+        write(sock,message,strlen(message));
+        str_len=read(sock,message,BUF_SIZE-1);
+        message[str_len]=0;
+        printf("Message from server : %s ",message);
+    }
+
+    return 0;  
+}
