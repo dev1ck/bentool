@@ -9,9 +9,9 @@
 
 int main(int argc, char *argv[])
 {
-    int sock, str_len;
+    int sock, str_len,recv_len,recv_cnt;
     struct sockaddr_in sa;
-    char * message ="test";
+    char message[BUF_SIZE];
 
     sock=socket(PF_INET, SOCK_STREAM, 0);
 
@@ -26,18 +26,25 @@ int main(int argc, char *argv[])
 
     while(1)
     {
-        //fgets(message, BUF_SIZE, stdin);
-        printf("test");
-        //fprintf("%s",message);
+        fputs("Input message(Q to quit) : ", stdout);
+        fgets(message, BUF_SIZE, stdin);
         if(!strcmp(message, "q\n") || !strcmp(message,"Q\n"))
         {
             puts("Close socket");
             close(sock);
+            break;
         }
-        write(sock,message,strlen(message));
-        str_len=read(sock,message,BUF_SIZE-1);
+        str_len = write(sock,message,strlen(message));
+        recv_len=0;
+
+        while(recv_len<str_len)
+        {
+            recv_cnt = read(sock,&message[recv_len],BUF_SIZE-1);
+            recv_len += recv_cnt;
+        }
+        str_len=
         message[str_len]=0;
-        printf("Message from server : %s ",message);
+        printf("Message from server : %s",message);
     }
 
     return 0;  

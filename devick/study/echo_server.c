@@ -13,7 +13,7 @@ int main(int argc, char * argv[])
     struct sockaddr_in sa, ca;
     socklen_t cas;
     char message[BUF_SIZE];
-
+ 
     ss=socket(PF_INET, SOCK_STREAM, 0);
 
     memset(&sa,0,sizeof(sa));
@@ -30,7 +30,6 @@ int main(int argc, char * argv[])
     {
         cs = accept(ss, (struct sockaddr *)&ca, &cas);
         while((str_len=read(cs, message, BUF_SIZE))!=0)
-            printf("%s\n",message);
             write(cs, message, str_len);
         close(cs);
     }
