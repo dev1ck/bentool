@@ -30,50 +30,50 @@ int main(int argc, char **argv)
         {
             case 'o':
 	    	    o_option_flag = 1;
-		    if(!strcmp(optarg, "scan") || !strcmp(optarg, "spoof"))
-		    {
-			strcpy(o_optarg_arr, optarg);
-			printf("o_optarg_value : %s\n", o_optarg_arr);
-		    }
-		    else
-		    {
-			printf("%s -o [scan|spoof]\n", argv[0]);
-		    }
+				if(!strcmp(optarg, "scan") || !strcmp(optarg, "spoof"))
+				{
+					strcpy(o_optarg_arr, optarg);
+					printf("o_optarg_value : %s\n", o_optarg_arr);
+				}
+				else
+				{
+					printf("%s -o [scan|spoof]\n", argv[0]);
+				}
                 break;
 		
             case 't':
-		t_option_flag=1;
-		    if(!strcmp(optarg, "arp") || !strcmp(optarg, "ping") || !strcmp(optarg, "tcp"))
-		    {
-			strcpy(t_optarg_arr, optarg);
-			printf("t_optarg_value : %s\n", t_optarg_arr);
-		    }
-		    else
-		    {
-			printf("%s -t [arp|ping|tcp]\n", argv[0]);
-		    }
+				t_option_flag=1;
+				if(!strcmp(optarg, "arp") || !strcmp(optarg, "ping") || !strcmp(optarg, "tcp"))
+				{
+					strcpy(t_optarg_arr, optarg);
+					printf("t_optarg_value : %s\n", t_optarg_arr);
+				}
+				else
+				{
+					printf("%s -t [arp|ping|tcp]\n", argv[0]);
+				}
 
                 break;
 	    
-	    case 'h':
-		printf("help\n");
-		break;
+	 		case 'h':
+				printf("help\n");
+				break;
             
-	    case ':':
-		if(optopt == 'o')
-		{
-			printf("Enter the argument of the '-o' option\n");
+	    	case ':':
+				if(optopt == 'o')
+				{
+					printf("Enter the argument of the '-o' option\n");
+				}
+				else if(optopt == 't')
+				{
+					printf("Enter the argument of the '-t' option\n");
+				}
+				else
+				{
+					printf("unknown option: -%c\n", optopt);
+				}
+				break;
 		}
-		else if(optopt == 't')
-		{
-			printf("Enter the argument of the '-t' option\n");
-		}
-		else
-		{
-                	printf("unknown option: -%c\n", optopt);
-		}
-		break;
-        }
 	//argc -= optind;
 	//argv += optind;
     }
@@ -84,14 +84,14 @@ int main(int argc, char **argv)
 
     	if(!strcmp(o_optarg_arr, "scan"))
     	{
-	    if(!strcmp(t_optarg_arr, "arp")) printf("arp_scan()\n");
-	    else if(!strcmp(t_optarg_arr, "ping")) printf("ping_scan()\n");
-	    else if(!strcmp(t_optarg_arr, "tcp")) printf("tcp_scan()\n");	
+			if(!strcmp(t_optarg_arr, "arp")) printf("arp_scan()\n");
+			else if(!strcmp(t_optarg_arr, "ping")) printf("ping_scan()\n");
+			else if(!strcmp(t_optarg_arr, "tcp")) printf("tcp_scan()\n");	
     	}
     	else if(!strcmp(o_optarg_arr, "spoof"))
     	{
 	       	if(!strcmp(t_optarg_arr, "arp")) printf("arp_spoofing()\n");
-   	}
+   		}
     }
     else if(o_option_flag == 1 && t_option_flag == 0)
     {
