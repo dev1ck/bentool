@@ -25,7 +25,11 @@ void dump_arp_header(struct ether_arp *arp) // 주소를 넣기위한 함수
 	memcpy(&(ina_dst_ip.s_addr), arp->arp_tpa, 4); // arp_tpa 의 4byte 만큼의 목적지 ip 주소를 ina_dst_ip 에 복사해 저장 
 	sprintf(dst_ip, "%s", inet_ntoa(ina_dst_ip)); // ina_dst_ip 에 저장된 정수형 ip 주소를 문자형(. 닷형) 으로 바꾸어 dst_ip 에 저장한다.
 
+<<<<<<< HEAD
 	printf("[ARP][OP:%d][%02x:%02x:%02x:%02x:%02x:%02x->"  // Op : request 인지, reply 인지 출력 / 샌더의 맥 주소와 목적지 맥주소 출력 / 샌더 -> 목적지 ip 출력 
+=======
+	printf("[ARP][OP:%d][%02x:%02x:%02x:%02x:%02x:%02x->" // Op : request 인지, reply 인지 출력 / 샌더의 맥 주소와 목적지 맥주소 출력 / 샌더 -> 목적지 ip 출력 
+>>>>>>> 6e8ba99ccd84039da267ecff27de4c84492446fb
 		"%02x:%02x:%02x:%02x:%02x:%02x][%s->%s]\n", 
 		ntohs(arp->arp_op), 
 		s[0], s[1], s[2], s[3], s[4], s[5],
@@ -33,4 +37,7 @@ void dump_arp_header(struct ether_arp *arp) // 주소를 넣기위한 함수
 		src_ip, dst_ip
 	);		
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6e8ba99ccd84039da267ecff27de4c84492446fb
