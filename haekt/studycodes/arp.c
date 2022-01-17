@@ -22,12 +22,14 @@ int main(void)
 	ether_arp.arp_pln = 4;
 	ether_arp.arp_op = htons(ARPOP_REQUEST);
 
-	src_ip = inet_addr("1.2.3.4");
+	src_ip = inet_addr("192.168.214.131");
 	dst_ip = inet_addr("5.6.7.8");
-
+	printf("\n src_ip : %d \n\n",src_ip);
+	printf("\n dst_ip : %d\n\n",dst_ip);
 	memcpy(ether_arp.arp_spa, &src_ip, 4);
 	memcpy(ether_arp.arp_tpa, &dst_ip, 4);
-
+	printf("\n arp_spa : %d \n\n",ether_arp.arp_spa);
+	printf("\n arp_tpa : %d \n\n",ether_arp.arp_tpa);
 	for(i = 0; i < 6; i += 1) {
 		ether_arp.arp_sha[i] = i;
 	}
