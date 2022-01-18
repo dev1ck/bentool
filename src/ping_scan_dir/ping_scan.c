@@ -2,11 +2,14 @@
 
 int main(int argc, char *argv[]) 
 {
-    char *ptr;
-    struct sockaddr_in src_addr;
+    char *ptr, buf[32]; 
+    struct sockaddr_in reply_addr;
     struct icmp_packet icmp_p;
     int sock, prefix;
-    u_int32_t start_ip, end_ip, ip, mask; 
+    u_int32_t start_ip, end_ip, ip, mask;
+
+    socklen_t addr_size = sizeof(reply_addr);
+    memset(&reply_addr, 0, sizeof(reply_addr));
 
     if((sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP))<0)
     {
@@ -17,12 +20,14 @@ int main(int argc, char *argv[])
     memset(&icmp_p,0,sizeof(icmp_p));
     icmp_p.icmp.type = ICMP_ECHO;
     icmp_p.icmp.checksum = cksum((unsigned short *)&icmp_p, sizeof(struct icmp_packet));
+    icmp_p.icmp.un.echo.id = 1;
+    icmp_p.icmp.un.echo.sequence = 1;
     
     if(!(ptr=strchr(argv[1],'/')))
     {
-        //strcpy(ipaddr, argv[1]);
         ip = ntohl(inet_addr(argv[1]));
-        send_ping(sock, ip, icmp_p);
+        if(send_ping(sock, ip, icmp_p)<0)
+            printf("error ping\n");
     }
     else
     {
@@ -41,16 +46,25 @@ int main(int argc, char *argv[])
 
         for(ip = start_ip; ip<=end_ip; ip++)
         {
-            send_ping(sock, ip, icmp_p);
+            if(send_ping(sock, ip, icmp_p)<0)
+                printf("error ping\n");
         }
-
     }
+    while(1)
+    {
+        if((recvfrom(sock, buf, sizeof(buf),0,(struct sockaddr*)&reply_addr, &addr_size))<=0)
+            printf("fail_recive ping\n");
+        else printf("%s\n",inet_ntoa(reply_addr.sin_addr));
+    }
+    close(sock);
+
+    return 0;
 }
 
 uint16_t cksum(uint16_t *data, uint32_t len)
 {
 	unsigned long sum = 0;
-    
+
 	for(; len > 1; len -=2 ) {
 		sum += *data++;
 
@@ -73,19 +87,15 @@ uint16_t cksum(uint16_t *data, uint32_t len)
 int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p)
 {
     struct sockaddr_in addr;
-    char * ddl_ip;
+    char * DDN_ip;
 
     memset(&addr, 0 ,sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(ip);
 
-    if(sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        printf("error ping\n");
-        return -1;
-        exit(1);
-    }
-    ddl_ip = inet_ntoa(addr.sin_addr);
-    printf("send ping : %s\n", ddl_ip);
+    if(sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0) return -1;
+    DDN_ip = inet_ntoa(addr.sin_addr);
+    printf("send ping : %s\n", DDN_ip);
+
     return 1;
 }
