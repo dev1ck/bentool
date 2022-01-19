@@ -2,14 +2,14 @@
 
 int main(int argc, char *argv[]) 
 {
-    char *ptr, buf[32]; 
+    char *ptr;
     struct sockaddr_in reply_addr;
     struct icmp_packet icmp_p;
     int sock, prefix;
     u_int32_t start_ip, end_ip, ip, mask;
-
     socklen_t addr_size = sizeof(reply_addr);
     memset(&reply_addr, 0, sizeof(reply_addr));
+    pthread_t thread_id;
 
     if((sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP))<0)
     {
@@ -23,14 +23,14 @@ int main(int argc, char *argv[])
     icmp_p.icmp.icmp_id = 1;
     icmp_p.icmp.icmp_seq = 1;
     icmp_p.icmp.icmp_cksum = cksum((unsigned short*)&icmp_p, sizeof(icmp_p));
-    //icmp_p.icmp.un.echo.id = 1;
-    //icmp_p.icmp.un.echo.sequence = 1;
-    
+
+    // pthread_create(&thread_id, NULL, thread_function, &sock);
     if(!(ptr=strchr(argv[1],'/')))
     {
         ip = ntohl(inet_addr(argv[1]));
         if(send_ping(sock, ip, icmp_p)<0)
             printf("error ping\n");
+        receive_ping(sock);
     }
     else
     {
@@ -51,17 +51,9 @@ int main(int argc, char *argv[])
         {
             if(send_ping(sock, ip, icmp_p)<0)
                 printf("error ping\n");
+            receive_ping(sock);
         }
     }
-    
-    if((recvfrom(sock, buf, sizeof(buf),0,(struct sockaddr*)&reply_addr, &addr_size))<=0)
-        printf("fail_recive ping\n");
-    else
-    {
-        printf("%s\n",inet_ntoa(reply_addr.sin_addr));
-        printf("%s\n",buf);
-    }
-    
     close(sock);
 
     return 0;
@@ -101,7 +93,48 @@ int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p)
 
     if(sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0) return -1;
     DDN_ip = inet_ntoa(addr.sin_addr);
-    printf("send ping : %s\n", DDN_ip);
+    //printf("send ping : %s\n", DDN_ip);
 
     return 1;
+}
+
+// void *thread_function(void *p)
+// {
+// 	char buffer[BUFMAX];
+// 	int sock, len; 
+	
+// 	sock= *((int *)p);
+
+// 	while((len = read(sock, buffer, BUFMAX)) > 0) {
+// 		struct ip *ip = (struct ip *)buffer;
+// 		int ip_header_len = ip->ip_hl << 2;
+
+// 		if(ip->ip_p == IPPROTO_ICMP) {
+// 			struct icmp *icmp = (struct icmp *)(buffer + ip_header_len);
+// 			if((icmp->icmp_type == 0) && (icmp->icmp_code == 0)) {
+// 				printf("from : %s\n", inet_ntoa(ip->ip_src));
+// 			}
+// 		}
+// 	}
+
+// 	return 0;
+// }
+
+void receive_ping(int sock)
+{
+    char buffer[BUFMAX];
+    int len;
+
+    if((len = read(sock, buffer ,BUFMAX))>0)
+    {
+        struct ip *ip = (struct ip *)buffer;
+		int ip_header_len = ip->ip_hl << 2;
+
+		if(ip->ip_p == IPPROTO_ICMP) {
+			struct icmp *icmp = (struct icmp *)(buffer + ip_header_len);
+			if((icmp->icmp_type == 0) && (icmp->icmp_code == 0)) {
+				printf("from : %s\n", inet_ntoa(ip->ip_src));
+			}
+		}
+    }
 }
