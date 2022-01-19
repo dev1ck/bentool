@@ -18,10 +18,13 @@ int main(int argc, char *argv[])
     }
 
     memset(&icmp_p,0,sizeof(icmp_p));
-    icmp_p.icmp.type = ICMP_ECHO;
-    icmp_p.icmp.checksum = cksum((unsigned short *)&icmp_p, sizeof(struct icmp_packet));
-    icmp_p.icmp.un.echo.id = 1;
-    icmp_p.icmp.un.echo.sequence = 1;
+    icmp_p.icmp.icmp_type = 8;
+    icmp_p.icmp.icmp_code = 0;
+    icmp_p.icmp.icmp_id = 1;
+    icmp_p.icmp.icmp_seq = 1;
+    icmp_p.icmp.icmp_cksum = cksum((unsigned short*)&icmp_p, sizeof(icmp_p));
+    //icmp_p.icmp.un.echo.id = 1;
+    //icmp_p.icmp.un.echo.sequence = 1;
     
     if(!(ptr=strchr(argv[1],'/')))
     {
@@ -50,12 +53,15 @@ int main(int argc, char *argv[])
                 printf("error ping\n");
         }
     }
-    while(1)
+    
+    if((recvfrom(sock, buf, sizeof(buf),0,(struct sockaddr*)&reply_addr, &addr_size))<=0)
+        printf("fail_recive ping\n");
+    else
     {
-        if((recvfrom(sock, buf, sizeof(buf),0,(struct sockaddr*)&reply_addr, &addr_size))<=0)
-            printf("fail_recive ping\n");
-        else printf("%s\n",inet_ntoa(reply_addr.sin_addr));
+        printf("%s\n",inet_ntoa(reply_addr.sin_addr));
+        printf("%s\n",buf);
     }
+    
     close(sock);
 
     return 0;

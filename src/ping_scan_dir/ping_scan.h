@@ -5,17 +5,24 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
-#include <netinet/ip_icmp.h>
 #include <stdlib.h>
 #include <errno.h>
 
 #define IPv4_BUFFER 20
 #define PREFIX_BUFFER 5
 
+struct icmp
+{
+	uint8_t  icmp_type;
+	uint8_t  icmp_code;
+	uint16_t icmp_cksum;
+	uint16_t icmp_id;
+	uint16_t icmp_seq;
+};
 struct icmp_packet
 {
-	struct icmphdr icmp;
-	char data[32];
+	struct icmp icmp;
+	char data[10];
 };
 
 void ping_scan(char *IP_addr);
