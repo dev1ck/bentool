@@ -43,9 +43,9 @@ struct icmp_packet
 	char data[10];
 };
 
-void ping_scan(char *IP_addr);
+int ping_scan(char *input_IP);
 uint16_t cksum(uint16_t *data, uint32_t len);
 int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_packet);
 void *thread_function(void *p);
 void receive_ping(int sock);
-
+void quick_sort(uint32_t * addr, int start, int end);
