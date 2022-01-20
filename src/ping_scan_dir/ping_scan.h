@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <pthread.h>
+#include <sys/time.h>
 
 #define BUFMAX 4096
 
