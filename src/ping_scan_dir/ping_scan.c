@@ -114,8 +114,8 @@ void *thread_function(void *p)
     uint32_t addr[255] = {0};
     int index = 0;
     struct sockaddr_in print_src;
-    memset(&print_src, 0, sizeof(print_src));
 
+    memset(&print_src, 0, sizeof(print_src));
 	sock= *((int *)p);
 
 	while((len = read(sock, buffer, BUFMAX))>0)
@@ -142,6 +142,7 @@ void *thread_function(void *p)
     }
     printf("\n%d host is up\n",index);
     printf("fin\n");
+
 	return 0;
 }
 
@@ -156,14 +157,9 @@ void quick_sort(uint32_t *addr, int start, int end)
 
     while(i <= j)
     { 
-        while(i <= end && addr[i] <= addr[pivot])
-        { 
-            i++; 
-        } 
-        while(j > start && addr[j] >= addr[pivot])
-        {
-            j--; 
-        } 
+        while(i <= end && addr[i] <= addr[pivot]) i++;
+        while(j > start && addr[j] >= addr[pivot]) j--;
+
         if(i > j)
         {
             temp = addr[j];
