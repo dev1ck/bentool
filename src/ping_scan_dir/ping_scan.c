@@ -1,6 +1,6 @@
 #include "ping_scan.h"
 
-int ping_scan(char *input_IP) 
+int main(int argc, char *argv[]) 
 {
     char *ptr;
     struct icmp_packet icmp_p;
@@ -8,6 +8,8 @@ int ping_scan(char *input_IP)
     u_int32_t start_ip, end_ip, ip, mask;
     pthread_t thread_id;
     struct timeval tv;
+    struct in_addr save_start_ip, save_end_ip;
+    char p_sip[16], p_eip[16];
 
     tv.tv_sec = 1;
     tv.tv_usec = 0;
@@ -32,9 +34,10 @@ int ping_scan(char *input_IP)
 
     pthread_create(&thread_id, NULL, thread_function, &sock);
 
-    if(!(ptr=strchr(input_IP,'/')))
+    if(!(ptr=strchr(argv[1],'/')))
     {
-        ip = ntohl(inet_addr(input_IP));
+        ip = ntohl(inet_addr(argv[1]));
+        printf("Send to ICMP Packet : %s\n\n",argv[1]);
         if(send_ping(sock, ip, icmp_p)<0)
         {
             printf("error ping\n");
@@ -43,9 +46,9 @@ int ping_scan(char *input_IP)
     }
     else
     {
-        strtok(input_IP,"/");
+        strtok(argv[1],"/");
 
-        ip = ntohl(inet_addr(input_IP));
+        ip = ntohl(inet_addr(argv[1]));
         prefix =  atoi(ptr+1);
         if(prefix>32 || prefix < 0)
         {
@@ -57,6 +60,12 @@ int ping_scan(char *input_IP)
         start_ip = (ip&mask)+1;
         end_ip = (ip|~mask)-1;
 
+        save_start_ip.s_addr = htonl(start_ip);
+        save_end_ip.s_addr = htonl(end_ip);
+        
+        strcpy(p_sip,inet_ntoa(save_start_ip));
+        strcpy(p_eip,inet_ntoa(save_end_ip));
+        printf("Send To ICMP Packet : %s ~ %s\n\n\n",p_sip, p_eip);
         for(ip = start_ip; ip<=end_ip; ip++)
         {
             if(send_ping(sock, ip, icmp_p)<0)
@@ -113,9 +122,9 @@ void *thread_function(void *p)
 	int sock, len;
     uint32_t addr[255] = {0};
     int index = 0;
-    struct sockaddr_in print_src;
+    struct in_addr print_IP;
 
-    memset(&print_src, 0, sizeof(print_src));
+    memset(&print_IP, 0, sizeof(print_IP));
 	sock= *((int *)p);
 
 	while((len = read(sock, buffer, BUFMAX))>0)
@@ -137,11 +146,10 @@ void *thread_function(void *p)
 
     for(int i=0; addr[i]!=0 ; i++)
     {
-        print_src.sin_addr.s_addr = htonl(addr[i]);
-        printf("host up : %s\n",inet_ntoa(print_src.sin_addr));
+        print_IP.s_addr = htonl(addr[i]);
+        printf("host up : %s\n\n",inet_ntoa(print_IP));
     }
-    printf("\n%d host is up\n",index);
-    printf("fin\n");
+    printf("\n\n%d host is up\n",index);
 
 	return 0;
 }
