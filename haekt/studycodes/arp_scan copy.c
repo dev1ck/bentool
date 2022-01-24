@@ -1,25 +1,21 @@
 #include "arp_scan.h"
 
-struct eth_hdr ether;
-struct arp_hdr arp;
-struct ifreq ifr_hw,ifr_ip;
 static unsigned char d_target[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 static unsigned char live_ip[6];
 static unsigned int live_num;
 static unsigned int scannig_time;
-
+/*
 int arp_scan(char *v);
 
 int main(int argc,char **argv)
 {
-    if(argc<2)
-        printf("too few argc");
     printf("\n%s\n\n",argv[1]);
     arp_scan(argv[1]);
     return 0;
 }
-
-int arp_scan(char *v)
+*/
+//int arp_scan(char *v)
+int main(int argc,**argv)
 {
     printf("\n\n===== Starting ARP_Scan.. =====\n\n");
 
@@ -129,11 +125,8 @@ int arp_scan(char *v)
     memset(arp.ar_tha,0,sizeof(arp.ar_tha));
 
     //목적지 IP주소]
-    printf("argv[] : %s",v);
-    struct in_addr tip;
-    inet_aton(v,&tip);
-    
-    arp.ar_tip=tip.s_addr;
+    //printf("argv[] : %s",*v);
+    arp.ar_tip[0] = 0xc0;
     
 
     printf("\n\n===== recoding to buffer.. =====\n\n");

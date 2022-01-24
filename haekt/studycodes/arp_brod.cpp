@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <string.h>
 #include <net/if_arp.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
-#include <string.h>
+
 #include <netinet/in.h> //htons: 엔디안 변경
 
 struct eth_hdr{ //이더넷 헤더
