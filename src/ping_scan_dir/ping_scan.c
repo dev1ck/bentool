@@ -16,12 +16,12 @@ int main(int argc, char *argv[])
 
     if((sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP))<0)
     {
-        printf("error socket : %d\n",errno);
+        perror("socket");
         return -1;
     }
     if((setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv))<0)
     {
-        printf("error socket\n");
+        perror("setsocket");
         return -1;
     }
 
