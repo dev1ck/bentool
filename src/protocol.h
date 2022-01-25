@@ -20,6 +20,7 @@
 
 #define ICMPMAX 4096
 #define ETHMAX 1514
+#define ARPMAX 42
 
 struct etherhdr
 {
@@ -28,10 +29,19 @@ struct etherhdr
 	uint16_t ether_type;		/* packet type ID field	*/
 };
 
-struct arphdr
+struct	arphdr 
 {
-
+	uint16_t ar_hrd;		// Format of hardware address 
+   	uint16_t ar_pro;		// Format of protocol address
+   	uint8_t ar_hln;			// Length of hardware address 
+   	uint8_t ar_pln;			// Length of protocol address 
+   	uint16_t ar_op;			// ARP opcode (command) 
+   	uint8_t ar_sha[6];		// Sender hardware address 
+   	uint32_t ar_sip;		// Sender IP address why uint32_t? becouse sin_addr.s_addr is 4 byte 
+   	uint8_t ar_tha[6];		// Target hardware address 
+   	uint32_t ar_tip;		// Target IP address 
 };
+
 struct iphdr
 {
     uint8_t ip_hl:4;		/* header length */
