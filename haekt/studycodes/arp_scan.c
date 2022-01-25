@@ -169,6 +169,10 @@ int arp_scan(char *v)
     printf("\n\n===== Live IP =====\n\n");
     printf("\n\nhelo\n\n");
     printf("start");
+
+    struct sockaddr_in recv_ip;
+    int addr_len;
+
     addr_len = sizeof(struct sockaddr_in);
     printf("1");
     if(recvfrom(sock,recv_buf,sizeof(recv_buf),0,&recv_ip,&addr_len)<0)
