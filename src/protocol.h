@@ -21,6 +21,7 @@
 #define ICMPMAX 4096
 #define ETHMAX 1514
 #define ARPMAX 42
+#define IN_NAME "eth0"
 
 struct etherhdr
 {
@@ -81,3 +82,5 @@ struct icmp_packet
 };
 
 int ping_scan(char *input_IP);
+uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
+uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);

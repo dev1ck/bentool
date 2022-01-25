@@ -1,5 +1,7 @@
 #include "protocol.h"
 
+enum {INDEX, HWADDR, ADDR};
+
 int main(int argc, char * argv[])
 {  
     int sock, len, rlen;
@@ -34,12 +36,24 @@ int main(int argc, char * argv[])
     for(int i=0 ;i <3 ; i++)
     {
         memset(&ifr[i], 0x00, sizeof(struct ifreq));
-        strcpy(ifr[i].ifr_name, "eth0");
+        strcpy(ifr[i].ifr_name, IN_NAME);
     }
 
-    ioctl(sock, SIOCGIFINDEX, &ifr[0]);
-    ioctl(sock, SIOCGIFHWADDR, &ifr[1]);
-    ioctl(sock, SIOCGIFADDR, &ifr[2]);
+    if((ioctl(sock, SIOCGIFINDEX, &ifr[INDEX]))<0)
+    {
+        perror("ioctl index");
+        return -1;
+    }
+    if((ioctl(sock, SIOCGIFHWADDR, &ifr[HWADDR]))<0)
+    {
+        perror("ioctl hwaddr");
+        return -1;
+    }
+    if((ioctl(sock, SIOCGIFADDR, &ifr[ADDR]))<0)
+    {
+        perror("ioctl addr");
+        return -1;
+    }
     
     memcpy(my_mac, ifr[1].ifr_hwaddr.sa_data, 6);
     my_addr = (struct sockaddr_in *)&ifr[2].ifr_addr;
