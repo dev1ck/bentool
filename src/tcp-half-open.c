@@ -19,8 +19,8 @@ void *tcp_thread_function(void *p);
 struct param_data
 {
     int sock;
-    int start_port;
-    int end_port;
+    uint16_t start_port;
+    uint16_t end_port;
 };
 
 int tcp_half_scan(int argc, char **argv)
@@ -28,10 +28,9 @@ int tcp_half_scan(int argc, char **argv)
     pthread_t thread_id;
     int on = 1;
     struct sockaddr_in addr;
-    int start_port, end_port, port;
+    uint16_t start_port, end_port, port;
     struct param_data param;
     struct tcp_packet packet;
-
 
     if(argc<=5)
     {
@@ -50,6 +49,10 @@ int tcp_half_scan(int argc, char **argv)
         perror("setsockopt ");
         return 1;
     }
+    param.start_port = start_port = (uint16_t)atoi(argv[ARGV_START_PORT]);
+    param.end_port = end_port = (uint16_t)atoi(argv[ARGV_END_PORT]);
+
+    pthread_create(&thread_id, NULL, tcp_thread_function, &param);
 
     memset(&addr, 0x00, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -57,10 +60,7 @@ int tcp_half_scan(int argc, char **argv)
 
     memset(&packet, 0x00, sizeof(packet));
 
-    param.start_port = start_port = atoi(argv[ARGV_START_PORT]);
-    param.end_port = end_port = atoi(argv[ARGV_END_PORT]);
-
-    pthread_create(&thread_id, NULL, tcp_thread_function, &param);
+    
 
     for(port = start_port; port <= end_port; port += 1)
     {
@@ -74,7 +74,7 @@ int tcp_half_scan(int argc, char **argv)
         }
     }
 
-    sleep(5);
+    sleep(3);
 
     close(param.sock);
 
@@ -95,7 +95,7 @@ void *tcp_thread_function(void *p)
 
         struct tcphdr *tcphdr = (struct tcphdr *)(buffer + (iphdr->ip_hl << 2));
 
-        if((ntohs(tcphdr->th_sport) >= param_ptr->start_port) && (ntohs(tcphdr->th_dport) <= param_ptr->end_port))
+        if((ntohs(tcphdr->th_sport) >= param_ptr->start_port) && (ntohs(tcphdr->th_sport) <= param_ptr->end_port))
         {
             if(((tcphdr->th_flags & TH_SYN) == TH_SYN) && ((tcphdr->th_flags & TH_ACK) == TH_ACK))
                 printf("%s : %d\n", inet_ntoa(iphdr->ip_src), ntohs(tcphdr->th_sport));

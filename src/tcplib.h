@@ -5,21 +5,21 @@
 
 #define ETHERTYPE_IP 0x0800
 
-#ifndef __linux__
-    #pragma pack(push,1)
-#endif
+// #ifndef __linux__
+//     #pragma pack(push,1)
+// #endif
 struct ether_header
 {
     uint8_t ether_dhost[6];
     uint8_t ether_shost[6];
     uint16_t ether_type;
-}
-#ifndef __linux__
-    ;
-    #pragma pack(pop)
-#else
-__attribute__((__packed__));
-#endif
+};
+// #ifndef __linux__
+//     ;
+//     #pragma pack(pop)
+// #else
+// __attribute__((__packed__));
+// #endif
 
 // #ifndef __linux__
 //     #pragma pack(push ,1)
@@ -50,9 +50,9 @@ struct ip
 
 typedef uint32_t tcp_seq;
 
-#ifndef __linux__
-    #pragma pack(push, 1);
-#endif
+// #ifndef __linux__
+//     #pragma pack(push, 1);
+// #endif
 struct tcphdr
 {
     uint16_t th_sport;
@@ -71,13 +71,13 @@ struct tcphdr
     uint16_t th_win;
     uint16_t th_sum;
     uint16_t th_urp;
-}
-#ifndef __linux__
-    ;
-    #pragma pack(pop)
-#else
-__attribute__((__packed__));
-#endif
+};
+// #ifndef __linux__
+//     ;
+//     #pragma pack(pop)
+// #else
+// __attribute__((__packed__));
+// #endif
 
 // #ifndef __linux__
 //     #pragma pack(push, 1)

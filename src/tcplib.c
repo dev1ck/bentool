@@ -15,8 +15,8 @@ void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src
 {
     packet->tcphdr.th_seq = htonl(seq);
     packet->tcphdr.th_ack = htonl(ack);
-    packet->tcphdr.th_sport = ntohs(src_port);
-    packet->tcphdr.th_dport = ntohs(dst_port);
+    packet->tcphdr.th_sport = htons(src_port);
+    packet->tcphdr.th_dport = htons(dst_port);
     packet->tcphdr.th_off = 5;
     packet->tcphdr.th_flags = flag;
     packet->tcphdr.th_win = htons(8192);
@@ -26,7 +26,7 @@ void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src
     packet->iphdr.ip_p = IPPROTO_TCP;
     packet->iphdr.ip_src.s_addr = inet_addr(src_ip);
     packet->iphdr.ip_dst.s_addr = inet_addr(dst_ip);
-    packet->iphdr.ip_sum = ntohs(sizeof(packet->tcphdr));
+    packet->iphdr.ip_sum = htons(sizeof(packet->tcphdr));
 
     packet->tcphdr.th_sum = 0;
     packet->tcphdr.th_sum = tcp_cksum((unsigned short*)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
