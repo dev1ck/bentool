@@ -14,7 +14,7 @@
 
 enum {ARGV_CMD, ARGV_GARBAGE_1, ARGV_GARBAGE_2, ARGV_GARBAGE_3, ARGV_GARBAGE_4, ARGV_MY_IP, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
 
-void *thread_function(void *p);
+void *tcp_thread_function(void *p);
 
 struct param_data
 {
@@ -33,7 +33,7 @@ int tcp_half_scan(int argc, char **argv)
     struct tcp_packet packet;
 
 
-    if(argc!=5)
+    if(argc<=5)
     {
         printf("Usage : %s [my ip] [target ip] [start port] [end port]\n", argv[ARGV_CMD]);
         return 1;
@@ -60,7 +60,7 @@ int tcp_half_scan(int argc, char **argv)
     param.start_port = start_port = atoi(argv[ARGV_START_PORT]);
     param.end_port = end_port = atoi(argv[ARGV_END_PORT]);
 
-    pthread_create(&thread_id, NULL, thread_function, &param);
+    pthread_create(&thread_id, NULL, tcp_thread_function, &param);
 
     for(port = start_port; port <= end_port; port += 1)
     {
@@ -81,7 +81,7 @@ int tcp_half_scan(int argc, char **argv)
     return 0;
 }
 
-void *thread_function(void *p)
+void *tcp_thread_function(void *p)
 {
     int len;
     char buffer[BUFMAX];

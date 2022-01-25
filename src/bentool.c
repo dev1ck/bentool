@@ -1,13 +1,18 @@
 #include "protocol.h"
 
 #define BUFSIZE 100
+#define not_set_flag 0x00
+#define o_flag 0x01
+#define t_flag 0x10
+#define set_flag 0x11
 
+int ping_scan(char *input_IP);
 void help()
 {
     
 }
 
-void check_entered_option(int argc, char **argv, int *o_opt_flag, int *t_opt_flag)
+int check_entered_option(int argc, char **argv, unsigned short *opt_flag)
 {
 	int i;
 	// check the argv[] option
@@ -17,25 +22,28 @@ void check_entered_option(int argc, char **argv, int *o_opt_flag, int *t_opt_fla
 	    {
 		    //strncpy(argv_o_backup, argv[i], strlen(argv[i]));
 		    //argv_backup = argv[i];
-		    *o_opt_flag = 1;
+		    *opt_flag += o_flag;
 	    }
 	    else if(!strncmp(argv[i], "-t", 2))
 	    {
 		    //strncpy(argv_t_backup, argv[i], strlen(argv[i]));
 		    //argv_backup = argv[i];
-		    *t_opt_flag = 1;
+		    *opt_flag += t_flag;
 	    }
     }
+
+    if(*opt_flag == not_set_flag) return -1;
 }
 
 int main(int argc, char **argv)
 {
     int opt,i=0;
+    unsigned short opt_flag= 0;
     int o_opt_flag=0, t_opt_flag=0;
     char o_optarg_arr[BUFSIZE] = {0,};
     char t_optarg_arr[BUFSIZE] = {0,};
-//    char *argv_t_backup=(char*)malloc(sizeof(char *));
-//    char *argv_o_backup=(char*)malloc(sizeof(char *));
+//  char *argv_t_backup=(char*)malloc(sizeof(char *));
+//  char *argv_o_backup=(char*)malloc(sizeof(char *));
 
     if(argc < 2)
     {
@@ -44,8 +52,11 @@ int main(int argc, char **argv)
 		exit(1);
     }
 
-    check_entered_option(argc, argv, &o_opt_flag, &t_opt_flag);
-
+    if(check_entered_option(argc, argv, &opt_flag) == -1)
+    {
+		fprintf(stderr, "there is no option\n");
+		exit(1);
+    }
 	
 	// check the argument of options - right argument and when user no input option
     while((opt = getopt(argc, argv, "o:t:h")) != EOF)
@@ -62,9 +73,8 @@ int main(int argc, char **argv)
 				else
 				{
 					printf("%s -o [scan|spoof]\n", argv[0]);
-					exit(1);
 				}
-				break;
+                break;
 		
             case 't':
 				if(!strncmp(optarg, "arp", 3) || !strncmp(optarg, "ping", 4) || !strncmp(optarg, "tcp", 3))
@@ -75,12 +85,11 @@ int main(int argc, char **argv)
 				else
 				{
 					printf("%s -t [arp|ping|tcp]\n", argv[0]);
-					exit(1);
 				}
 
-				break;
+                break;
 	    
-			case 'h':
+	    	case 'h':
 				printf("help\n");
 				break;
 
@@ -99,9 +108,8 @@ int main(int argc, char **argv)
 					printf("unknown option: -%c\n", optopt);
 				}
 				break;
-			
 			*/
-			case '?':
+	    	case '?':
 				if(optopt == 'o')	printf("%s -o [arp|ping|tcp] \n", argv[0]);
 				else if(optopt == 't')	printf("%s -t [arp|ping|tcp]\n", argv[0]);
         }
@@ -111,26 +119,26 @@ int main(int argc, char **argv)
 
 
 	// check turn on one of options and when all flags are set 1
-    if(o_opt_flag == 1 && t_opt_flag == 1)
+    if(opt_flag == set_flag)
     {
 
     	if(!strncmp(o_optarg_arr, "scan", 4))
     	{
 			if(!strncmp(t_optarg_arr, "arp", 3)) printf("arp_scan()\n");
 			else if(!strncmp(t_optarg_arr, "ping", 4)) ping_scan(argv[5]);
-			else if(!strncmp(t_optarg_arr, "tcp", 3)) printf("tcp_scan()\n");	
+			else if(!strncmp(t_optarg_arr, "tcp", 3)) tcp_half_scan(argc, argv);	
     	}
     	else if(!strncmp(o_optarg_arr, "spoof", 5))
     	{
 	       	if(!strncmp(t_optarg_arr, "arp", 3)) printf("arp_spoofing()\n");
    		}
     }
-    else if(o_opt_flag == 1 && t_opt_flag == 0)
+    else if(opt_flag == o_flag)
     {
 	    printf("specify the '-t' option\n");
 	    exit(1);
     }
-    else if(t_opt_flag == 1 && o_opt_flag ==0)
+    else if(opt_flag == t_flag)
     {
 	    printf("specify the '-o' option\n");
 	    exit(1);

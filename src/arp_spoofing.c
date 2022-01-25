@@ -45,6 +45,6 @@ int main(int argc, char **argv)
     sin = (struct sockaddr_in *)&ifr[ADDR].ifr_addr;
 
 
-    //buffer = make_arp_request_packet();
+    buffer = make_arp_request_packet(src_mac, sin->sin_addr, );
     return 0;
 }

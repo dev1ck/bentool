@@ -29,7 +29,7 @@ void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src
     packet->iphdr.ip_sum = ntohs(sizeof(packet->tcphdr));
 
     packet->tcphdr.th_sum = 0;
-    packet->tcphdr.th_sum = cksum((unsigned short*)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
+    packet->tcphdr.th_sum = tcp_cksum((unsigned short*)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
 }
 
 void make_ip_header(struct ip *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen)
@@ -44,10 +44,10 @@ void make_ip_header(struct ip *iphdr, const char *src_ip, const char *dst_ip, ui
     iphdr->ip_src.s_addr = inet_addr(src_ip);
     iphdr->ip_dst.s_addr = inet_addr(dst_ip);
     iphdr->ip_sum = 0;
-    iphdr->ip_sum = cksum((unsigned short *)iphdr, sizeof(struct ip));
+    iphdr->ip_sum = tcp_cksum((unsigned short *)iphdr, sizeof(struct ip));
 }
 
-uint16_t cksum(uint16_t *data, uint32_t len)
+uint16_t tcp_cksum(uint16_t *data, uint32_t len)
 {
     unsigned long sum = 0;
 
