@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
+#include "protocol.h"
 
 #define BUFSIZE 100
 
@@ -57,58 +54,56 @@ int main(int argc, char **argv)
         switch(opt)
         {
             case 'o':
-		    if(!strncmp(optarg, "scan", 4) || !strncmp(optarg, "spoof", 5))
-		    {
-				strncpy(o_optarg_arr, optarg, strlen(optarg));
-				printf("o_optarg_value : %s\n", o_optarg_arr);
-				exit(1);
-		    }
-		    else
-		    {
-				printf("%s -o [scan|spoof]\n", argv[0]);
-				exit(1);
-		    }
-            break;
+				if(!strncmp(optarg, "scan", 4) || !strncmp(optarg, "spoof", 5))
+				{
+					strncpy(o_optarg_arr, optarg, strlen(optarg));
+					printf("o_optarg_value : %s\n", o_optarg_arr);
+				}
+				else
+				{
+					printf("%s -o [scan|spoof]\n", argv[0]);
+					exit(1);
+				}
+				break;
 		
             case 't':
-		    if(!strncmp(optarg, "arp", 3) || !strncmp(optarg, "ping", 4) || !strncmp(optarg, "tcp", 3))
-		    {
-				strncpy(t_optarg_arr, optarg, strlen(optarg));
-				printf("t_optarg_value : %s\n", t_optarg_arr);
-				exit(1);
-		    }
-		    else
-		    {
-				printf("%s -t [arp|ping|tcp]\n", argv[0]);
-				exit(1);
-		    }
+				if(!strncmp(optarg, "arp", 3) || !strncmp(optarg, "ping", 4) || !strncmp(optarg, "tcp", 3))
+				{
+					strncpy(t_optarg_arr, optarg, strlen(optarg));
+					printf("t_optarg_value : %s\n", t_optarg_arr);
+				}
+				else
+				{
+					printf("%s -t [arp|ping|tcp]\n", argv[0]);
+					exit(1);
+				}
 
-            break;
+				break;
 	    
 			case 'h':
-			printf("help\n");
-			break;
+				printf("help\n");
+				break;
 
 			/*
 			case ':':
-			if(optopt == 'o')
-			{
-				printf("Enter the argument of the '-o' option\n");
-			}
-			else if(optopt == 't')
-			{
-				printf("Enter the argument of the '-t' option\n");
-			}
-			else
-			{
-						printf("unknown option: -%c\n", optopt);
-			}
-			break;
+				if(optopt == 'o')
+				{
+					printf("Enter the argument of the '-o' option\n");
+				}
+				else if(optopt == 't')
+				{
+					printf("Enter the argument of the '-t' option\n");
+				}
+				else
+				{
+					printf("unknown option: -%c\n", optopt);
+				}
+				break;
 			
 			*/
 			case '?':
-			if(optopt == 'o')	printf("%s -o [arp|ping|tcp] \n", argv[0]);
-			else if(optopt == 't')	printf("%s -t [arp|ping|tcp]\n", argv[0]);
+				if(optopt == 'o')	printf("%s -o [arp|ping|tcp] \n", argv[0]);
+				else if(optopt == 't')	printf("%s -t [arp|ping|tcp]\n", argv[0]);
         }
 	//argc -= optind;
 	//argv += optind;
