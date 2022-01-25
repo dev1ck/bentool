@@ -5,7 +5,7 @@ int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p);
 void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
 
-int main(int argc, char *argv[]) 
+int ping_scan(char *input_IP) 
 {
     char *ptr;
     struct icmp_packet icmp_p;
@@ -39,10 +39,10 @@ int main(int argc, char *argv[])
 
     pthread_create(&thread_id, NULL, thread_function, &sock);
 
-    if(!(ptr=strchr(argv[1],'/')))
+    if(!(ptr=strchr(input_IP,'/')))
     {
-        ip = ntohl(inet_addr(argv[1]));
-        printf("Send to ICMP Packet : %s\n\n",argv[1]);
+        ip = ntohl(inet_addr(input_IP));
+        printf("Send to ICMP Packet : %s\n\n",input_IP);
         if(send_ping(sock, ip, icmp_p)<0)
         {
             perror("sendto");
@@ -51,9 +51,9 @@ int main(int argc, char *argv[])
     }
     else
     {
-        strtok(argv[1],"/");
+        strtok(input_IP,"/");
 
-        ip = ntohl(inet_addr(argv[1]));
+        ip = ntohl(inet_addr(input_IP));
         prefix =  atoi(ptr+1);
         if(prefix>32 || prefix < 0)
         {
