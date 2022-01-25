@@ -1,16 +1,8 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include "protocol.h"
 
 #ifndef __linux__
     #include <winsock2.h>
-#else
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
 #endif
-    #include "pcap.h"
 
 int get_interface_devices(void)
 {

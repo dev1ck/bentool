@@ -32,7 +32,7 @@ int check_entered_option(int argc, char **argv, unsigned short *opt_flag)
 	    }
     }
 
-    if(*opt_flag == not_set_flag) return -1;
+    if(*opt_flag == not_set_flag) return 0;
 }
 
 int main(int argc, char **argv)
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     }
 	
 	// check the argument of options - right argument and when user no input option
-    while((opt = getopt(argc, argv, "o:t:h")) != EOF)
+    while((opt = getopt(argc, argv, "o:t:hi")) != EOF)
     {
 
         switch(opt)
@@ -68,7 +68,6 @@ int main(int argc, char **argv)
 				if(!strncmp(optarg, "scan", 4) || !strncmp(optarg, "spoof", 5))
 				{
 					strncpy(o_optarg_arr, optarg, strlen(optarg));
-					printf("o_optarg_value : %s\n", o_optarg_arr);
 				}
 				else
 				{
@@ -80,7 +79,6 @@ int main(int argc, char **argv)
 				if(!strncmp(optarg, "arp", 3) || !strncmp(optarg, "ping", 4) || !strncmp(optarg, "tcp", 3))
 				{
 					strncpy(t_optarg_arr, optarg, strlen(optarg));
-					printf("t_optarg_value : %s\n", t_optarg_arr);
 				}
 				else
 				{
@@ -91,6 +89,10 @@ int main(int argc, char **argv)
 	    
 	    	case 'h':
 				printf("help\n");
+				break;
+
+			case 'i':
+				get_interface_devices();
 				break;
 
 			/*
