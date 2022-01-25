@@ -1,4 +1,17 @@
-#include "ping_scan.h"
+#include "protocol.h"
+
+#define BUFMAX 4096
+
+struct icmp_packet
+{
+	struct icmphdr icmp;
+	char data[10];
+};
+
+uint16_t cksum(uint16_t *data, uint32_t len);
+int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p);
+void *thread_function(void *p);
+void quick_sort(uint32_t * addr, int start, int end);
 
 int main(int argc, char *argv[]) 
 {
@@ -40,7 +53,7 @@ int main(int argc, char *argv[])
         printf("Send to ICMP Packet : %s\n\n",argv[1]);
         if(send_ping(sock, ip, icmp_p)<0)
         {
-            printf("error ping\n");
+            perror("sendto");
             return -1;
         }    
     }
@@ -69,7 +82,7 @@ int main(int argc, char *argv[])
         for(ip = start_ip; ip<=end_ip; ip++)
         {
             if(send_ping(sock, ip, icmp_p)<0)
-                printf("error ping\n");
+                perror("sendto");
         }
     }
     
@@ -105,7 +118,6 @@ uint16_t cksum(uint16_t *data, uint32_t len)
 int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p)
 {
     struct sockaddr_in addr;
-    char * DDN_ip;
 
     memset(&addr, 0 ,sizeof(addr));
     addr.sin_family = AF_INET;
@@ -129,12 +141,12 @@ void *thread_function(void *p)
 
 	while((len = read(sock, buffer, BUFMAX))>0)
     {
-		struct ip *ip = (struct ip *)buffer;
+		struct iphdr *ip = (struct iphdr *)buffer;
 		int ip_header_len = ip->ip_hl << 2;
 
 		if(ip->ip_p == IPPROTO_ICMP)
         {
-			struct icmp *icmp = (struct icmp *)(buffer + ip_header_len);
+			struct icmphdr *icmp = (struct icmphdr *)(buffer + ip_header_len);
 			if((icmp->icmp_type == 0) && (icmp->icmp_code == 0))
             {
                 addr[index]=ntohl(ip->ip_src.s_addr);

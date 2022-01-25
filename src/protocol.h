@@ -1,20 +1,35 @@
 #pragma once
 #include <stdio.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <unistd.h>
 #include <pthread.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <net/if.h>
+#include <net/ethernet.h>
 
-#define BUFMAX 4096
+#include "pcap.h"
 
-struct ip
+struct etherhdr
 {
-	uint8_t ip_hl:4;		/* header length */
+
+};
+
+struct arphdr
+{
+
+};
+struct iphdr
+{
+    uint8_t ip_hl:4;		/* header length */
 	uint8_t ip_v:4;		/* version */
 	uint8_t ip_tos;			/* type of service */
 	uint16_t ip_len;			/* total length */
@@ -29,23 +44,19 @@ struct ip
 	uint16_t ip_sum;			/* checksum */
 	struct in_addr ip_src, ip_dst;	/* source and dest address */
 };
-struct icmp
+
+struct tcphdr
 {
-	uint8_t  icmp_type;
+
+};
+
+struct icmphdr
+{
+    uint8_t  icmp_type;
 	uint8_t  icmp_code;
 	uint16_t icmp_cksum;
 	uint16_t icmp_id;
 	uint16_t icmp_seq;
 };
-struct icmp_packet
-{
-	struct icmp icmp;
-	char data[10];
-};
 
 int ping_scan(char *input_IP);
-uint16_t cksum(uint16_t *data, uint32_t len);
-int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_packet);
-void *thread_function(void *p);
-void receive_ping(int sock);
-void quick_sort(uint32_t * addr, int start, int end);
