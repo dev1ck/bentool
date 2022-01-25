@@ -29,7 +29,7 @@ int arp_scan(char *v)
     struct sockaddr_ll sll;
     struct sockaddr_in *sin;
     static unsigned char buf[sizeof(struct eth_hdr)+sizeof(struct arp_hdr)];
-    static unsigned char recv_buf[sizeof(struct eth_hdr)+sizeof(struct arp_hdr)];
+    uint8_t recv_buf[sizeof(struct eth_hdr)+sizeof(struct arp_hdr)];
     //struct sockaddr recv_ip;
 
     printf("\n\n===== Creating Socket.. =====\n\n");
@@ -170,11 +170,44 @@ int arp_scan(char *v)
     printf("\n\nhelo\n\n");
     printf("start");
 
-    struct sockaddr_in recv_ip;
-    int addr_len;
 
+    // struct sockaddr_in recv_ip;
+    int addr_len;
+    int recv_len;
+    // struct eth_hdr *receth;
+    // struct arp_hdr *recarp;
+    // struct in_addr sip,dip;
+    // uint8_t smac[6], dmac[6], rec_mac[6];
+
+    
+    // memset(receth, 0, sizeof(*receth));
+    // memset(recarp, 0, sizeof(*recarp));
+    // memset(&sip, 0, sizeof(sip));
+    
     addr_len = sizeof(struct sockaddr_in);
     printf("1");
+
+    // while((recv_len=read(sock, recv_buf, sizeof(recv_buf)))>=0)
+    // {
+    //     receth=(struct eth_hdr*)recv_buf;
+    //     recarp=(struct arp_hdr*)(recv_buf+14);
+    //     memcpy(smac,receth->src_addr,6);
+    //     memcpy(dmac,receth->dest_addr,6);
+    //     printf("\n%02x:%02x:%02x:%02x:%02x:%02x -> %02x:%02x:%02x:%02x:%02x:%02x\n",
+    //     smac[0],smac[1],smac[2],smac[3],smac[4],smac[5],dmac[0],dmac[1],dmac[2],dmac[3],dmac[4],dmac[5]);
+
+
+    //     if(receth->frame_type == htons(ETH_ARP))
+    //     { 
+    //         sip.s_addr = recarp->ar_sip;
+    //         memcpy(rec_mac, recarp->ar_tha, 6);
+            
+
+    //         printf("%s : %02x:%02x:%02x:%02x:%02x:%02x\n",inet_ntoa(sip),rec_mac[0],rec_mac[1],rec_mac[2],rec_mac[3],rec_mac[4],rec_mac[5]);
+    //         return 0;
+    //     }
+
+    // }
     if(recvfrom(sock,recv_buf,sizeof(recv_buf),0,&recv_ip,&addr_len)<0)
     { 
            printf("notrecv");
