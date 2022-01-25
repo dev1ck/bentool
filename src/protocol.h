@@ -18,11 +18,14 @@
 
 #include "pcap.h"
 
-#define IPMAX 4096
+#define ICMPMAX 4096
+#define ETHMAX 1514
 
 struct etherhdr
 {
-
+	uint8_t  ether_dhost[6];		/* destination eth addr	*/
+	uint8_t  ether_shost[6];		/* source ether addr	*/
+	uint16_t ether_type;		/* packet type ID field	*/
 };
 
 struct arphdr

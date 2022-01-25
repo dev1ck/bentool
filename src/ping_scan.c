@@ -122,7 +122,7 @@ int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p)
 
 void *thread_function(void *p)
 {
-	char buffer[IPMAX];
+	char buffer[ICMPMAX];
 	int sock, len;
     uint32_t addr[255] = {0};
     int index = 0;
@@ -131,7 +131,7 @@ void *thread_function(void *p)
     memset(&print_IP, 0, sizeof(print_IP));
 	sock= *((int *)p);
 
-	while((len = read(sock, buffer, IPMAX))>0)
+	while((len = read(sock, buffer, ICMPMAX))>0)
     {
 		struct iphdr *ip = (struct iphdr *)buffer;
 		int ip_header_len = ip->ip_hl << 2;
