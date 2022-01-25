@@ -18,6 +18,8 @@
 
 #include "pcap.h"
 
+#define IPMAX 4096
+
 struct etherhdr
 {
 
@@ -57,6 +59,12 @@ struct icmphdr
 	uint16_t icmp_cksum;
 	uint16_t icmp_id;
 	uint16_t icmp_seq;
+};
+
+struct icmp_packet
+{
+	struct icmphdr icmp;
+	char data[10];
 };
 
 int ping_scan(char *input_IP);

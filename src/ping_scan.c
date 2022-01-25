@@ -1,13 +1,5 @@
 #include "protocol.h"
 
-#define BUFMAX 4096
-
-struct icmp_packet
-{
-	struct icmphdr icmp;
-	char data[10];
-};
-
 uint16_t cksum(uint16_t *data, uint32_t len);
 int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p);
 void *thread_function(void *p);
@@ -130,7 +122,7 @@ int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p)
 
 void *thread_function(void *p)
 {
-	char buffer[BUFMAX];
+	char buffer[IPMAX];
 	int sock, len;
     uint32_t addr[255] = {0};
     int index = 0;
@@ -139,7 +131,7 @@ void *thread_function(void *p)
     memset(&print_IP, 0, sizeof(print_IP));
 	sock= *((int *)p);
 
-	while((len = read(sock, buffer, BUFMAX))>0)
+	while((len = read(sock, buffer, IPMAX))>0)
     {
 		struct iphdr *ip = (struct iphdr *)buffer;
 		int ip_header_len = ip->ip_hl << 2;
