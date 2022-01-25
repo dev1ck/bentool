@@ -1,12 +1,6 @@
 #include "arp_scan.h"
 
-struct eth_hdr ether;
-struct arp_hdr arp;
-struct ifreq ifr_hw,ifr_ip;
-static unsigned char d_target[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-static unsigned char live_ip[6];
-static unsigned int live_num;
-static unsigned int scannig_time;
+
 
 int arp_scan(char *v);
 
@@ -21,17 +15,25 @@ int main(int argc,char **argv)
 
 int arp_scan(char *v)
 {
+    
+    static unsigned char d_target[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
+    static unsigned char live_ip[6];
+    static unsigned int live_num;
+    static unsigned int scannig_time;
+    int prefix;
+
     printf("\n\n===== Starting ARP_Scan.. =====\n\n");
 
-    int sock;
+    static int sock;
     unsigned char *mac_addr= NULL;
     struct sockaddr_ll sll;
     struct sockaddr_in *sin;
     static unsigned char buf[sizeof(struct eth_hdr)+sizeof(struct arp_hdr)];
+    static unsigned char recv_buf[sizeof(struct eth_hdr)+sizeof(struct arp_hdr)];
+    //struct sockaddr recv_ip;
 
-    
     printf("\n\n===== Creating Socket.. =====\n\n");
-    sock=socket(PF_PACKET,SOCK_RAW,0);
+    sock=socket(PF_PACKET,SOCK_RAW,htons(ETH_P_ALL));
 
     if(sock<0)
     {  
@@ -99,7 +101,7 @@ int arp_scan(char *v)
 
     
 
-    ether.frame_type = htons(0x0806);
+    ether.frame_type = htons(ETH_ARP);
    
     printf("ether dest:");
     for(i=0;i<6;i++){
@@ -114,10 +116,10 @@ int arp_scan(char *v)
     printf("\n\n===== Creating ARP header.. =====\n\n");
 
     arp.ar_hrd=htons(0x0001); //하드웨어 주소 타입. 이더넷은 1
-    arp.ar_pro=htons(0x0800); //프로토콜 타입. ARP는 0x0806
+    arp.ar_pro=htons(ETH_IP); //프로토콜 타입. ARP는 0x0806
     arp.ar_hln=0x06; //하드웨어 주소 길이 1바이트. MAC주소 길이는 6
     arp.ar_pln=0x04; //프로토콜 주소 길이 1바이트. IP주소 길이는 4
-    arp.ar_op=htons(0x0001); //oper코드. 요청or응답 패킷 확인. ARP요청0001 응답0002
+    arp.ar_op=htons(ARP_REQUEST); //oper코드. 요청or응답 패킷 확인. ARP요청0001 응답0002
 
 
     //출발지 IP주소
@@ -131,8 +133,20 @@ int arp_scan(char *v)
     //목적지 IP주소]
     printf("argv[] : %s",v);
     struct in_addr tip;
-    inet_aton(v,&tip);
+
+    if(strchr(v,'/'))
+    {
+        
+        
+
+    }
+    else
+    {
     
+    inet_aton(v,&tip);
+
+    }
+
     arp.ar_tip=tip.s_addr;
     
 
@@ -142,14 +156,77 @@ int arp_scan(char *v)
 
     printf("\n\n===== sending ARP pacekt ====\n\n");
     printf("\n buffer : %0x \n\n",buf);
+
     if((sendto(sock, buf,sizeof(struct eth_hdr) + sizeof(struct arp_hdr),0,
         (struct sockaddr *)&sll, sizeof(struct sockaddr_ll)))<0)
         {
             printf("sendto() error!");
-            return 0;
+            return -1;
         } //보냄
 
-    printf("\n\n===== ARP pacekt is sended! ====\n\n");
+    printf("\n\n===== ARP pacekt is sended! =====\n\n");
 
+    printf("\n\n===== Live IP =====\n\n");
+    printf("\n\nhelo\n\n");
+    printf("start");
+    addr_len = sizeof(struct sockaddr_in);
+    printf("1");
+    if(recvfrom(sock,recv_buf,sizeof(recv_buf),0,&recv_ip,&addr_len)<0)
+    { 
+           printf("notrecv");
+           return -1;
+    }
+    else
+    {
+            printf("recv is work well!! addr_len : %d",addr_len);
+    }
+    printf("2");
+    
+
+
+    /*struct sockaddr_in addr; 
+    int addr_len; 
+    char buffer[2048]; 
+    int recv_len;
+    addr_len = sizeof(struct sockaddr_in);
+    while( (recv_len = recvfrom(sock, buffer, 256, 0, &addr, &addr_len)) == -1) 
+    { 
+        if(errno == EINTR) 
+        { // signal이 발생하여 읽지 못한 경우 
+            continue; 
+        } 
+        else 
+        { 
+            fprintf(stderr, "Recv Error: %s\n", strerror(errno)); 
+            return -1; 
+        } 
+    }*/
+    /*
+    unsigned char buffer[4096];
+    printf("\n\n 1 \n\n");
+    if(read(sock,buffer,4096)<0)
+    {
+        printf("\n\nerror!\n\n");
+        exit(1);
+
+    }
+    else
+    {
+      printf("\n\nit is work well!~!\n\n");
+    }
+
+    printf("\n\n 2 \n\n");
+
+    */
+
+    /*for(int i=0;i<live_num;i++)
+    {
+
+
+    }*/
     return 0;
 }
+
+
+    
+    

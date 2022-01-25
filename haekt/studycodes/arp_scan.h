@@ -8,6 +8,8 @@
 #include<linux/if_ether.h> 
 #include<net/ethernet.h>
 #include<stdlib.h>
+#include<sys/types.h>
+#include<errno.h>
 
 #ifndef __linux__
     #include <winsock.h>
@@ -58,4 +60,7 @@ struct arp_hdr {
 __attribute__ ((__packed__)); // 구조체 바이트 빈공간 제어 -> 빈공간 없이 차곡차곡 저장
 #endif
 
+struct eth_hdr ether;
+struct arp_hdr arp;
+struct ifreq ifr_hw,ifr_ip;
 
