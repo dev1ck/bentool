@@ -1,9 +1,8 @@
 #include "protocol.h"
 
-enum {INDEX, HWADDR, ADDR};
-
-int main(int argc, char * argv[])
+int relay(uint8_t *dst_mac)
 {  
+    enum {INDEX, HWADDR, ADDR};
     int sock, len, rlen;
     unsigned char buffer[ETHMAX]={0,};
     struct sockaddr_ll sll, sadr_ll;
@@ -13,19 +12,10 @@ int main(int argc, char * argv[])
     struct ifreq ifr[3];
     void *iphdr_ptr;
     unsigned char my_mac[6];
-    unsigned char dst_mac[6];
     char * ptr;
     char p_src[16], p_dst[16];
 
     int i = 0;
-
-    ptr = strtok(argv[1],":");
-    while(ptr != NULL)
-    {
-        dst_mac[i]=(char)strtol(ptr, NULL, 16);
-        ptr = strtok(NULL, ":");
-        i++;
-    }
 
     if((sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL)))<0)
     {
