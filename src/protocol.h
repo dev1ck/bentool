@@ -34,6 +34,8 @@ struct nic_info
 {
     uint8_t my_mac[6];
     struct in_addr in_addr;
+    struct in_addr broadaddr;
+    struct in_addr maskaddr;
     int ifindex;
 };
 
