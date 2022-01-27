@@ -30,6 +30,13 @@
 #define IN_NAME "eth0"
 #define ETHERTYPE_IP 0x0800
 
+struct nic_info
+{
+    char my_mac[6];
+    struct in_addr in_addr;
+    int ifindex;
+};
+
 #ifndef __linux__
     #pragma pack(push,1)
 #endif

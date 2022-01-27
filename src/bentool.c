@@ -18,16 +18,7 @@ int check_entered_option(int argc, char **argv, unsigned short *opt_flag)
 	int i;
 	// check the argv[] option
     for(i=0; i<argc; i++)
-    {
-		/*
-		switch(*argv[i])
-		{
-			case 'o': *opt_flag += o_flag;
-			case 't': *opt_flag += t_flag;
-			case 'i': *opt_flag += i_flag;
-		}
-		*/
-		
+    {	
 	    if(!strncmp(argv[i], "-o", 2))
 	    {
 		    //strncpy(argv_o_backup, argv[i], strlen(argv[i]));
