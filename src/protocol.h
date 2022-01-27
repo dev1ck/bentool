@@ -3,6 +3,7 @@
 
 #pragma once
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -23,10 +24,11 @@
 
 #include "pcap.h"
 
-#define ICMPMAX 4096
+#define PACKMAX 4096
 #define ETHMAX 1514
 #define ARPMAX 42
 #define IN_NAME "eth0"
+#define ETHERTYPE_IP 0x0800
 
 #ifndef __linux__
     #pragma pack(push,1)
@@ -93,11 +95,29 @@ struct iphdr
 __attribute__((__packed__));
 #endif
 
+typedef uint32_t tcp_seq;
+
 #ifndef __linux__
     #pragma pack(push, 1);
 #endif
 struct tcphdr
 {
+	uint16_t th_sport;
+    uint16_t th_dport;
+    tcp_seq th_seq;
+    tcp_seq th_ack;
+    uint8_t th_x2:4;
+    uint8_t th_off:4;
+    uint8_t th_flags;
+#define TH_FIN 0x01
+#define TH_SYN 0x02
+#define TH_RST 0x04
+#define TH_PUSH 0x08
+#define TH_ACK 0x10
+#define TH_URG 0x20
+    uint16_t th_win;
+    uint16_t th_sum;
+    uint16_t th_urp;
 
 }
 #ifndef __linux
@@ -129,6 +149,7 @@ int ping_scan(char *input_IP);
 int tcp_half_scan(int argc, char **argv);
 uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);
+int tcp_half_scan(int argc, char **argv);
 int get_interface_devices(char * arg);
 int relay(uint8_t *dst_mac);
 #endif

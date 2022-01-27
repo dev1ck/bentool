@@ -1,16 +1,20 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <pthread.h>
+#include "protocol.h"
 
-#include "tcplib.h"
+#define PSEUDO_HEADER_LEN 12
 
-#define BUFMAX 4096
+struct tcp_packet
+{
+    struct etherhdr ether_header;
+    struct iphdr iphdr;
+    struct tcphdr tcphdr;
+};
+
+void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, 
+const char *dst_ip, uint16_t dst_port, 
+uint32_t seq, uint32_t ack, uint8_t flag);
+void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
+uint16_t tcp_cksum(uint16_t *data, uint32_t len);
+void  strmac_to_buffer(const char *str, uint8_t *mac);
 
 enum {ARGV_CMD, ARGV_GARBAGE_1, ARGV_GARBAGE_2, ARGV_GARBAGE_3, ARGV_GARBAGE_4, ARGV_MY_IP, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
 
@@ -67,7 +71,7 @@ int tcp_half_scan(int argc, char **argv)
         make_tcp_header(&packet, argv[ARGV_MY_IP], rand(), argv[ARGV_TARGET_IP], port, rand(), 0, TH_SYN);
         make_ip_header(&(packet.iphdr), argv[ARGV_MY_IP], argv[ARGV_TARGET_IP], sizeof(struct tcphdr));
 
-        if(sendto(param.sock, &(packet.iphdr), sizeof(struct ip) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        if(sendto(param.sock, &(packet.iphdr), sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             perror("sendto ");
             break;
@@ -84,12 +88,12 @@ int tcp_half_scan(int argc, char **argv)
 void *tcp_thread_function(void *p)
 {
     int len;
-    char buffer[BUFMAX];
+    char buffer[PACKMAX];
     struct param_data *param_ptr = (struct param_data*)p;
 
-    while((len = read(param_ptr->sock, buffer, BUFMAX)) > 0)
+    while((len = read(param_ptr->sock, buffer, PACKMAX)) > 0)
     {
-        struct ip *iphdr = (struct ip *)buffer;
+        struct iphdr *iphdr = (struct iphdr *)buffer;
 
         if(iphdr->ip_p != IPPROTO_TCP) continue;
 
@@ -103,4 +107,80 @@ void *tcp_thread_function(void *p)
     }
 
     return 0;
+}
+
+void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag)
+{
+    packet->tcphdr.th_seq = htonl(seq);
+    packet->tcphdr.th_ack = htonl(ack);
+    packet->tcphdr.th_sport = htons(src_port);
+    packet->tcphdr.th_dport = htons(dst_port);
+    packet->tcphdr.th_off = 5;
+    packet->tcphdr.th_flags = flag;
+    packet->tcphdr.th_win = htons(8192);
+    packet->tcphdr.th_urp = 0;
+
+    packet->iphdr.ip_ttl = 0;
+    packet->iphdr.ip_p = IPPROTO_TCP;
+    packet->iphdr.ip_src.s_addr = inet_addr(src_ip);
+    packet->iphdr.ip_dst.s_addr = inet_addr(dst_ip);
+    packet->iphdr.ip_sum = htons(sizeof(packet->tcphdr));
+
+    packet->tcphdr.th_sum = 0;
+    packet->tcphdr.th_sum = tcp_cksum((unsigned short*)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
+}
+
+void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen)
+{
+    iphdr->ip_v = 4;
+    iphdr->ip_hl = sizeof(struct iphdr) >> 2;
+    iphdr->ip_id = 100;
+    iphdr->ip_len = htons(sizeof(struct iphdr) + datalen);
+    iphdr->ip_off = htons(0);
+    iphdr->ip_ttl = 128;
+    iphdr->ip_p = IPPROTO_TCP;
+    iphdr->ip_src.s_addr = inet_addr(src_ip);
+    iphdr->ip_dst.s_addr = inet_addr(dst_ip);
+    iphdr->ip_sum = 0;
+    iphdr->ip_sum = tcp_cksum((unsigned short *)iphdr, sizeof(struct iphdr));
+}
+
+uint16_t tcp_cksum(uint16_t *data, uint32_t len)
+{
+    unsigned long sum = 0;
+
+    for(; 1 < len; len -= 2)
+    {
+        // sum = sum + *data
+        // *data++
+        sum += *data++;
+
+        if(sum & 0x80000000)
+            sum = (sum & 0xffff) + (sum >> 16);
+    }
+
+    if(len == 1)
+    {
+        unsigned short i = 0;
+        *(unsigned char *)(&i) = *(unsigned char*)data;
+        sum += i;
+    }
+
+    while(sum >> 16)
+        sum = (sum & 0xffff) + (sum >> 16);
+
+    return (sum == 0xffff) ? sum : ~sum;
+}
+
+void strmac_to_buffer(const char *str, uint8_t *mac)
+{
+    int i;
+    unsigned int tmac[6];
+
+    sscanf(str, "%x:%x:%x:%x:%x:%x", &tmac[0], &tmac[1], &tmac[2], &tmac[3], &tmac[4], &tmac[5]);
+
+    for(i = 0; i < 6; i += 1)
+    {
+        mac[i] = (unsigned char)tmac[i];
+    }
 }
