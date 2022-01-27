@@ -1,3 +1,5 @@
+#include "protocol.h"
+
 void usage()
 {
     printf("syntax : ./bentool -o <option> -t <type>\n");

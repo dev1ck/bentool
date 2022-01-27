@@ -19,7 +19,7 @@ void *thread_recivarp(void *p);
 void *thread_relay(void *p);
 void INThandler(int sig);
 
-int main(int argc, char **argv)
+int arp_spoof(int argc, char **argv)
 {
     int sock, len,result;
     struct sockaddr_ll sll;
