@@ -32,7 +32,7 @@
 
 struct nic_info
 {
-    char my_mac[6];
+    uint8_t my_mac[6];
     struct in_addr in_addr;
     int ifindex;
 };
