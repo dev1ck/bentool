@@ -1,8 +1,8 @@
 #include "protocol.h"
+enum {INDEX, HWADDR, ADDR};
 
 int relay(uint8_t *dst_mac)
 {  
-    enum {INDEX, HWADDR, ADDR};
     int sock, len, rlen;
     unsigned char buffer[ETHMAX]={0,};
     struct sockaddr_ll sll, sadr_ll;
@@ -73,8 +73,6 @@ int relay(uint8_t *dst_mac)
         {
             strcpy(p_src, inet_ntoa(ip_header->ip_src));
             strcpy(p_dst, inet_ntoa(ip_header->ip_dst));
-
-            printf("%s -> %s\n",p_src, p_dst);
 
             memcpy(eth_h->ether_dhost,dst_mac,6);
             memcpy(eth_h->ether_shost, my_mac, 6);

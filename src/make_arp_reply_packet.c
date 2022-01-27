@@ -13,7 +13,7 @@ uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, 
     arphdr.ar_op = htons(0x0002);
 
     memcpy(arphdr.ar_sha, source_mac, 6);
-    arphdr.ar_sip, source_ip.s_addr;
+    arphdr.ar_sip = source_ip.s_addr;
     memcpy(arphdr.ar_tha, target_mac ,6);
     arphdr.ar_tip = target_ip.s_addr;
 
