@@ -2,17 +2,19 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include "protocol.h"
-//int main(void)
-int get_info(struct nic_info *nic_info, char *if_name)
+
+/*
+int main(void)
 {
     struct nic_info nic_info;
     memset(&nic_info, 0, sizeof(nic_info));
     get_info(&nic_info, "eth0");
-    //printf("%s\n", inet_ntoa(nic_info.in_addr));
-    //printf("%02x:%02x:%02x:%02x:%02x:%02x\n",nic_info.my_mac[0], nic_info.my_mac[1], nic_info.my_mac[2], nic_info.my_mac[3], nic_info.my_mac[4], nic_info.my_mac[5]);
-    //printf("ifindex : %d\n", nic_info.ifindex);
+    printf("%s\n", inet_ntoa(nic_info.in_addr));
+    printf("%02x:%02x:%02x:%02x:%02x:%02x\n",nic_info.my_mac[0], nic_info.my_mac[1], nic_info.my_mac[2], nic_info.my_mac[3], nic_info.my_mac[4], nic_info.my_mac[5]);
+    printf("ifindex : %d\n", nic_info.ifindex);
     return 0;
 }
+*/
 
 int get_info(struct nic_info *nic_info, char *if_name)
 {
@@ -40,40 +42,42 @@ int get_info(struct nic_info *nic_info, char *if_name)
         return -1;
     }
 
-    for(ifr = if_conf.ifc_req, i=0; i < if_conf.ifc_len; i += sizeof(struct ifreq))
+    
+    for(ifr = if_conf.ifc_req; ifr->ifr_name[0]; ifr++)
     {
-        for(; ifr->ifr_name[0]; ifr++)
-            if(!strcmp(ifr->ifr_name, if_name))
+        if(!strcmp(ifr->ifr_name, if_name))
+        {
+            ip_addr = (struct sockaddr_in*)&ifr->ifr_addr;
+            nic_info->in_addr.s_addr = ip_addr->sin_addr.s_addr;
+
+            if(ntohl(nic_info->in_addr.s_addr) != INADDR_LOOPBACK)
             {
-                ip_addr = (struct sockaddr_in*)&ifr->ifr_addr;
-                nic_info->in_addr = ip_addr->sin_addr;
-
-                if(ntohl(nic_info->in_addr.s_addr) != INADDR_LOOPBACK)
+                if(ioctl(sock, SIOCGIFHWADDR, (char*)ifr) < 0)
                 {
-                    if(ioctl(sock, SIOCGIFHWADDR, (char*)ifr) < 0)
-                    {
-                        perror("ioctl() - get mac address ");
-                        free(if_conf.ifc_buf);
-                        close(sock);
-                        return -1;
-                    }
-                    memcpy(nic_info->my_mac, ifr->ifr_hwaddr.sa_data, 6);
-                }
-
-                if(ioctl(sock, SIOCGIFINDEX, (char*)ifr) < 0)
-                {
-                    perror("ioctl() - get ifindex ");
+                    perror("ioctl() - get mac address ");
                     free(if_conf.ifc_buf);
                     close(sock);
                     return -1;
                 }
-                nic_info->ifindex = ifr->ifr_ifindex;
-                break;
+                memcpy(nic_info->my_mac, ifr->ifr_hwaddr.sa_data, 6);
             }
-        break;
-    }
 
+            if(ioctl(sock, SIOCGIFINDEX, (char*)ifr) < 0)
+            {
+                perror("ioctl() - get ifindex ");
+                free(if_conf.ifc_buf);
+                close(sock);
+                return -1;
+            }
+            nic_info->ifindex = ifr->ifr_ifindex;
+
+            free(if_conf.ifc_buf);
+            close(sock);
+            return 0;
+        }       
+    }
     free(if_conf.ifc_buf);
     close(sock);
-    return 0;
+    return -1;
 }
+   
