@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     	{
 			if(!strncmp(t_optarg_arr, "arp", 3)) printf("arp_scan()\n");
 			else if(!strncmp(t_optarg_arr, "ping", 4)) ping_scan(argv[5]);
-			else if(!strncmp(t_optarg_arr, "tcp", 3)) tcp_half_scan(argc, argv);	
+			//else if(!strncmp(t_optarg_arr, "tcp", 3)) tcp_half_scan(argc, argv);	
     	}
     	else if(!strncmp(o_optarg_arr, "spoof", 5))
     	{

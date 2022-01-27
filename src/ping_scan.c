@@ -1,12 +1,6 @@
 #include "protocol.h"
 
-struct icmp_packet
-{
-	struct icmphdr icmp;
-	char data[10];
-};
-
-uint16_t cksum(uint16_t *data, uint32_t len);
+uint16_t cksum(uint8_t *data, uint32_t len);
 int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p);
 void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
@@ -41,7 +35,7 @@ int ping_scan(char *input_IP)
     icmp_p.icmp.icmp_code = 0;
     icmp_p.icmp.icmp_id = 1;
     icmp_p.icmp.icmp_seq = 1;
-    icmp_p.icmp.icmp_cksum = cksum((unsigned short*)&icmp_p, sizeof(struct icmphdr));
+    icmp_p.icmp.icmp_cksum = cksum((uint8_t *)&icmp_p, sizeof(struct icmphdr));
 
     pthread_create(&thread_id, NULL, thread_function, &sock);
 
@@ -90,12 +84,13 @@ int ping_scan(char *input_IP)
     return 0;
 }
 
-uint16_t cksum(uint16_t *data, uint32_t len)
+uint16_t cksum(uint8_t *data, uint32_t len)
 {
 	unsigned long sum = 0;
 
 	for(; len > 1; len -=2 ) {
-		sum += *data++;
+		sum += *data;
+        data+=2;
 
 		if(sum & 0x80000000) 
 			sum = (sum & 0xffff) + (sum >> 16);
@@ -103,7 +98,7 @@ uint16_t cksum(uint16_t *data, uint32_t len)
 
 	if(len == 1) {
 		unsigned short i = 0;
-		*(unsigned char *)(&i) = *(unsigned char *)data;
+		*(unsigned char *)(&i) = *data;
 		sum += i;
 	}
 
