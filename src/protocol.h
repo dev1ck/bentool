@@ -192,4 +192,5 @@ int tcp_half_scan(int argc, char **argv);
 int get_interface_devices(char * arg);
 int relay(uint8_t *dst_mac);
 uint16_t cksum(void *data, uint32_t len);
+int get_info(struct nic_info *nic_info, char *if_name);
 #endif

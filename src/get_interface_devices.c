@@ -11,6 +11,7 @@ int get_interface_devices(char *arg)
     char errbuf[PCAP_ERRBUF_SIZE];
     struct pcap_addr *if_addr;
 
+    
     if(pcap_findalldevs(&alldevs, errbuf) < 0)
     {
         printf("pcap_findalldevs error\n");
