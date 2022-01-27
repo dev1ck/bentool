@@ -1,5 +1,11 @@
 #include "protocol.h"
 
+struct icmp_packet
+{
+	struct icmphdr icmp;
+	char data[10];
+};
+
 uint16_t cksum(uint16_t *data, uint32_t len);
 int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p);
 void *thread_function(void *p);
@@ -35,7 +41,7 @@ int ping_scan(char *input_IP)
     icmp_p.icmp.icmp_code = 0;
     icmp_p.icmp.icmp_id = 1;
     icmp_p.icmp.icmp_seq = 1;
-    icmp_p.icmp.icmp_cksum = cksum((unsigned short*)&icmp_p, sizeof(icmp_p));
+    icmp_p.icmp.icmp_cksum = cksum((unsigned short*)&icmp_p, sizeof(struct icmphdr));
 
     pthread_create(&thread_id, NULL, thread_function, &sock);
 

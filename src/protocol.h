@@ -59,7 +59,7 @@ struct	arphdr
    	uint8_t ar_tha[6];		// Target hardware address 
    	uint32_t ar_tip;		// Target IP address 
 }
-#ifndef __linux
+#ifndef __linux__
     ;
     #pragma pack(pop)
 #else
@@ -124,21 +124,6 @@ struct icmphdr
 #else
 __attribute__((__packed__));
 #endif
-
-// #ifndef __linux__
-//     #pragma pack(push, 1);
-// #endif
-struct icmp_packet
-{
-	struct icmphdr icmp;
-	char data[10];
-};
-// #ifndef __linux
-//     ;
-//     #pragma pack(pop)
-// #else
-// __attribute__((__packed__));
-// #endif
 
 int ping_scan(char *input_IP);
 int tcp_half_scan(int argc, char **argv);
