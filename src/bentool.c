@@ -5,7 +5,7 @@
 #define o_flag 0x0001
 #define t_flag 0x0002
 #define i_flag 0x0004
-#define set_flag 0x1111
+#define set_flag 0x0003
 
 int ping_scan(char *input_IP);
 void help()
@@ -38,7 +38,7 @@ int check_entered_option(int argc, char **argv, unsigned short *opt_flag)
 		
     }
 
-    if(*opt_flag == not_set_flag) return 0;
+    if(*opt_flag == not_set_flag) return -1;
 }
 
 int main(int argc, char **argv)
@@ -111,7 +111,7 @@ int main(int argc, char **argv)
 	    	case '?':
 				if(optopt == 'o')	printf("%s -o [scan|spoof] \n", argv[0]);
 				else if(optopt == 't')	printf("%s -t [arp|ping|tcp]\n", argv[0]);
-				//else if(optopt == 'i') printf("%s\n");
+				else if(optopt == 'i') printf("%s\n");
         }
 	//argc -= optind;
 	//argv += optind;
@@ -125,8 +125,8 @@ int main(int argc, char **argv)
     	if(!strncmp(o_optarg_arr, "scan", 4))
     	{
 			if(!strncmp(t_optarg_arr, "arp", 3)) printf("arp_scan()\n");
-			else if(!strncmp(t_optarg_arr, "ping", 4)) ping_scan(argv[5]);
-			//else if(!strncmp(t_optarg_arr, "tcp", 3)) tcp_half_scan(argc, argv);	
+			else if(!strncmp(t_optarg_arr, "ping", 4))ping_scan(argv[5]);	
+			else if(!strncmp(t_optarg_arr, "tcp", 3)) tcp_half_scan(argc, argv);	
     	}
     	else if(!strncmp(o_optarg_arr, "spoof", 5))
     	{

@@ -45,12 +45,12 @@ int relay(uint8_t *dst_mac)
         return -1;
     }
     
-    memcpy(my_mac, ifr[1].ifr_hwaddr.sa_data, 6);
-    my_addr = (struct sockaddr_in *)&ifr[2].ifr_addr;
+    memcpy(my_mac, ifr[HWADDR].ifr_hwaddr.sa_data, 6);
+    my_addr = (struct sockaddr_in *)&ifr[ADDR].ifr_addr;
 
     memset(&sll, 0x00, sizeof(sll));
 	sll.sll_family = PF_PACKET;
-	sll.sll_ifindex = ifr[0].ifr_ifindex;
+	sll.sll_ifindex = ifr[INDEX].ifr_ifindex;
 	sll.sll_protocol = htons(ETH_P_ALL);
 
     if(bind(sock, (struct sockaddr *)&sll, sizeof(sll))<0)
@@ -78,7 +78,7 @@ int relay(uint8_t *dst_mac)
             memcpy(eth_h->ether_shost, my_mac, 6);
             
             memset(&sadr_ll, 0, sizeof(sadr_ll));
-            sadr_ll.sll_ifindex = ifr[0].ifr_ifindex;
+            sadr_ll.sll_ifindex = ifr[INDEX]].ifr_ifindex;
             sadr_ll.sll_halen = ETH_ALEN; // length of destination mac address
             memcpy(sadr_ll.sll_addr, dst_mac, 6);
 

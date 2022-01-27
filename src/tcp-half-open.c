@@ -2,18 +2,10 @@
 
 #define PSEUDO_HEADER_LEN 12
 
-struct tcp_packet
-{
-    struct etherhdr ether_header;
-    struct iphdr iphdr;
-    struct tcphdr tcphdr;
-};
-
 void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, 
 const char *dst_ip, uint16_t dst_port, 
 uint32_t seq, uint32_t ack, uint8_t flag);
 void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
-uint16_t tcp_cksum(uint16_t *data, uint32_t len);
 void  strmac_to_buffer(const char *str, uint8_t *mac);
 
 enum {ARGV_CMD, ARGV_GARBAGE_1, ARGV_GARBAGE_2, ARGV_GARBAGE_3, ARGV_GARBAGE_4, ARGV_MY_IP, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
@@ -127,7 +119,7 @@ void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src
     packet->iphdr.ip_sum = htons(sizeof(packet->tcphdr));
 
     packet->tcphdr.th_sum = 0;
-    packet->tcphdr.th_sum = tcp_cksum((unsigned short*)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
+    packet->tcphdr.th_sum = cksum((void *)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
 }
 
 void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen)
@@ -142,34 +134,7 @@ void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip,
     iphdr->ip_src.s_addr = inet_addr(src_ip);
     iphdr->ip_dst.s_addr = inet_addr(dst_ip);
     iphdr->ip_sum = 0;
-    iphdr->ip_sum = tcp_cksum((unsigned short *)iphdr, sizeof(struct iphdr));
-}
-
-uint16_t tcp_cksum(uint16_t *data, uint32_t len)
-{
-    unsigned long sum = 0;
-
-    for(; 1 < len; len -= 2)
-    {
-        // sum = sum + *data
-        // *data++
-        sum += *data++;
-
-        if(sum & 0x80000000)
-            sum = (sum & 0xffff) + (sum >> 16);
-    }
-
-    if(len == 1)
-    {
-        unsigned short i = 0;
-        *(unsigned char *)(&i) = *(unsigned char*)data;
-        sum += i;
-    }
-
-    while(sum >> 16)
-        sum = (sum & 0xffff) + (sum >> 16);
-
-    return (sum == 0xffff) ? sum : ~sum;
+    iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
 }
 
 void strmac_to_buffer(const char *str, uint8_t *mac)
