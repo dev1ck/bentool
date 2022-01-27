@@ -124,9 +124,37 @@ int main(int argc, char **argv)
 
     	if(!strncmp(o_optarg_arr, "scan", 4))
     	{
-			if(!strncmp(t_optarg_arr, "arp", 3)) printf("arp_scan()\n");
-			else if(!strncmp(t_optarg_arr, "ping", 4))ping_scan(argv[5]);	
-			else if(!strncmp(t_optarg_arr, "tcp", 3)) tcp_half_scan(argc, argv);	
+			if(!strncmp(t_optarg_arr, "arp", 3))
+			{
+				if(argc < 7)
+				{
+					//arp_scan_usage();
+					printf("arp_scan_usage()\n");
+					return 0;
+				}
+
+				//arp_scan();
+			}
+			else if(!strncmp(t_optarg_arr, "ping", 4))
+			{
+				if(argc < 6)
+				{
+					//ping_scan_usage();
+					printf("ping_scan_usage()\n");
+					return 0;
+				}
+				//ping_scan(argv[5]);
+			}
+			else if(!strncmp(t_optarg_arr, "tcp", 3))
+			{
+				if(argc < 9)
+				{
+					//half_open_scan_usage();
+					printf("half_open_scan_usage()\n");
+					return 0;
+				}
+				//tcp_half_scan(argc, argv);
+			}
     	}
     	else if(!strncmp(o_optarg_arr, "spoof", 5))
     	{
