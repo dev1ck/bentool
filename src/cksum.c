@@ -3,11 +3,12 @@
 uint16_t cksum(void *data, uint32_t len)
 {
 	unsigned long sum = 0;
-    uint32_t *fd;
+    uint16_t *fd;
 
-    fd = (uint32_t*)data;
+    fd = (uint16_t*)data;
 
-	for(; len > 1; len -=2 ) {
+	for(; len > 1; len -=2 )
+    {
 		sum += *fd++;
 
 		if(sum & 0x80000000) 
