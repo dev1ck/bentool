@@ -1,10 +1,11 @@
 #include "protocol.h"
 
 #define BUFSIZE 100
-#define not_set_flag 0x00
-#define o_flag 0x01
-#define t_flag 0x10
-#define set_flag 0x11
+#define not_set_flag 0x0000
+#define o_flag 0x0001
+#define t_flag 0x0002
+#define i_flag 0x0004
+#define set_flag 0x1111
 
 int ping_scan(char *input_IP);
 void help()
@@ -18,6 +19,15 @@ int check_entered_option(int argc, char **argv, unsigned short *opt_flag)
 	// check the argv[] option
     for(i=0; i<argc; i++)
     {
+		/*
+		switch(*argv[i])
+		{
+			case 'o': *opt_flag += o_flag;
+			case 't': *opt_flag += t_flag;
+			case 'i': *opt_flag += i_flag;
+		}
+		*/
+		
 	    if(!strncmp(argv[i], "-o", 2))
 	    {
 		    //strncpy(argv_o_backup, argv[i], strlen(argv[i]));
@@ -30,6 +40,11 @@ int check_entered_option(int argc, char **argv, unsigned short *opt_flag)
 		    //argv_backup = argv[i];
 		    *opt_flag += t_flag;
 	    }
+		else if(!strncmp(argv[i], "-i", 2))
+		{
+			*opt_flag += i_flag;
+		}
+		
     }
 
     if(*opt_flag == not_set_flag) return 0;
@@ -59,12 +74,13 @@ int main(int argc, char **argv)
     }
 	
 	// check the argument of options - right argument and when user no input option
-    while((opt = getopt(argc, argv, "o:t:hi")) != EOF)
+    while((opt = getopt(argc, argv, ":o:t:i:h")) != EOF)
     {
 
         switch(opt)
         {
             case 'o':
+
 				if(!strncmp(optarg, "scan", 4) || !strncmp(optarg, "spoof", 5))
 				{
 					strncpy(o_optarg_arr, optarg, strlen(optarg));
@@ -92,28 +108,19 @@ int main(int argc, char **argv)
 				break;
 
 			case 'i':
-				get_interface_devices();
+				get_interface_devices(optarg);
 				break;
 
-			/*
 			case ':':
-				if(optopt == 'o')
-				{
-					printf("Enter the argument of the '-o' option\n");
-				}
-				else if(optopt == 't')
-				{
-					printf("Enter the argument of the '-t' option\n");
-				}
-				else
-				{
-					printf("unknown option: -%c\n", optopt);
-				}
+				if(optopt =='o') printf("test\n");
+				else if(optopt == 't') printf("test\n");
+				else if(optopt == 'i') get_interface_devices(NULL);
 				break;
-			*/
+
 	    	case '?':
-				if(optopt == 'o')	printf("%s -o [arp|ping|tcp] \n", argv[0]);
+				if(optopt == 'o')	printf("%s -o [scan|spoof] \n", argv[0]);
 				else if(optopt == 't')	printf("%s -t [arp|ping|tcp]\n", argv[0]);
+				//else if(optopt == 'i') printf("%s\n");
         }
 	//argc -= optind;
 	//argv += optind;
