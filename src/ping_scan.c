@@ -5,7 +5,7 @@ void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
 
 
-int main(int argc, char **argv) 
+int ping_scan(int argc, char **argv) 
 {
     char *ptr;
     struct icmp_packet icmp_p;

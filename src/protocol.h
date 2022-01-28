@@ -186,7 +186,7 @@ __attribute__((__packed__));
 #endif
 
 void usage(void);
-int ping_scan(char *input_IP);
+int ping_scan(int argc, char **argv);
 int tcp_half_scan(int argc, char **argv);
 uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);
