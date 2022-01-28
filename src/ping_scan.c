@@ -5,7 +5,7 @@ void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
 
 
-int ping_scan(int argc, char **argv) 
+int main(int argc, char **argv) 
 {
     char *ptr;
     struct icmp_packet icmp_p;
@@ -15,7 +15,10 @@ int ping_scan(int argc, char **argv)
     struct timeval tv;
     struct in_addr save_start_ip, save_end_ip;
     char p_sip[16], p_eip[16];
+    time_t start_tm, end_tm, play_tm;
+    struct tm* ptimeinfo;
 
+    start_tm = time(NULL);
     tv.tv_sec = 2;
     tv.tv_usec = 0;
 
@@ -142,6 +145,14 @@ int ping_scan(int argc, char **argv)
     pthread_join(thread_id, (void *)&result);
     close(sock);
 
+    end_tm = time(NULL);
+    play_tm = end_tm - start_tm;
+    ptimeinfo = localtime(&play_tm);
+
+    printf("scanned in %lld seconds\n",play_tm);
+    
+
+
     return 0;
 }
 
@@ -164,14 +175,15 @@ void *thread_function(void *p)
 {
 	char buffer[PACKMAX];
 	int sock, len;
-    uint32_t addr[255] = {0};
+    uint32_t * addr;
     int index = 0;
     struct in_addr print_IP;
     struct hostent *host;
 
-
     memset(&print_IP, 0, sizeof(print_IP));
 	sock= *((int *)p);
+
+    addr = (uint32_t *)malloc(sizeof(uint32_t) * 1);
 
 	while((len = read(sock, buffer, PACKMAX))>0)
     {
@@ -185,28 +197,32 @@ void *thread_function(void *p)
             {
                 addr[index]=ntohl(ip->ip_src.s_addr);
                 index++;
+                if((addr = (uint32_t *)realloc(addr, sizeof(uint32_t)*(index+1))) == NULL)
+                {
+                    printf("Memory full error\n");
+                    break;
+                }
 			}
 		}
 	}
+
     quick_sort(addr, 0, index-1);
 
     for(int i=0; addr[i]!=0 ; i++)
     {
         print_IP.s_addr = htonl(addr[i]);
-        if((host = gethostbyaddr(&print_IP,sizeof(print_IP),AF_INET)) <0)
-        {
-            perror("Host error\n");        
-        }
+
+        host = gethostbyaddr(&print_IP,sizeof(print_IP),AF_INET);
+    
+        if(host == NULL) 
+            printf("host up : %s\n",inet_ntoa(print_IP));
         else
-        {   
-            if(host == NULL) 
-                printf("host up : %s\n",inet_ntoa(print_IP));
-            else
-                printf("host up : %s (%s)\n",inet_ntoa(print_IP), host->h_name);
-        }    
+            printf("host up : %s (%s)\n",inet_ntoa(print_IP), host->h_name);
+            
     }
     printf("\n%d hosts is up\n",index);
 
+    free(addr);
 	return 0;
 }
 
