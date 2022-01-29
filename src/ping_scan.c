@@ -7,7 +7,7 @@ void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
 
 
-int ping_scan(int argc, char **argv) 
+int ping_scan(int argc, char **argv)
 {
     char *ptr;
     struct icmp_packet icmp_p;
@@ -61,8 +61,7 @@ int ping_scan(int argc, char **argv)
             start_ip = end_ip;
             end_ip = ip;
         }
-
-        if(start_ip == end_ip)
+        else if(start_ip == end_ip)
         {
             printf("Send to ICMP Packet : %s\n\n",argv[1]);
             if(send_ping(sock, start_ip, icmp_p)<0)
@@ -147,7 +146,6 @@ int ping_scan(int argc, char **argv)
 
     end_tm = time(NULL);
     play_tm = end_tm - start_tm;
-    ptimeinfo = localtime(&play_tm);
 
     printf("scanned in %lld seconds\n",play_tm);
     

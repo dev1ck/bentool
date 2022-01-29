@@ -1,7 +1,7 @@
 #include "protocol.h"
 #define TIME_SEC 1
 
-int g_signal_fleg;
+int g_signal_fleg=0;
 
 struct thread_arg
 {

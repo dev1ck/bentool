@@ -11,7 +11,6 @@ int relay(uint8_t *dst_mac)
     struct iphdr *ip_header;
     void *iphdr_ptr;
     char * ptr;
-    char p_src[16], p_dst[16];
 
     int i = 0;
 
@@ -46,9 +45,6 @@ int relay(uint8_t *dst_mac)
         if(ip_header->ip_src.s_addr != info.in_addr.s_addr &&
            ip_header->ip_dst.s_addr != info.in_addr.s_addr)
         {
-            strcpy(p_src, inet_ntoa(ip_header->ip_src));
-            strcpy(p_dst, inet_ntoa(ip_header->ip_dst));
-
             memcpy(eth_h->ether_dhost,dst_mac,6);
             memcpy(eth_h->ether_shost, info.my_mac, 6);
             
