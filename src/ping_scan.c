@@ -1,11 +1,13 @@
 #include "protocol.h"
 
+int g_end_send_fleg=0;
+
 int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p);
 void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
 
 
-int ping_scan(int argc, char **argv) 
+int main(int argc, char **argv) 
 {
     char *ptr;
     struct icmp_packet icmp_p;
@@ -79,8 +81,7 @@ int ping_scan(int argc, char **argv)
             printf("Send To ICMP Packet : %s ~ %s\n\n",p_sip, p_eip);
             for(ip = start_ip; ip<=end_ip; ip++)
             {
-                if(send_ping(sock, ip, icmp_p)<0)
-                    perror("sendto");
+                send_ping(sock, ip, icmp_p);
                 sleep(0.01);
             }
         }
@@ -134,14 +135,13 @@ int ping_scan(int argc, char **argv)
             printf("Send To ICMP Packet : %s ~ %s\n\n",p_sip, p_eip);
             for(ip = start_ip; ip<=end_ip; ip++)
             {
-                if(send_ping(sock, ip, icmp_p)<0)
-                    perror("sendto");
+                send_ping(sock, ip, icmp_p);
                 sleep(0.01);
             }
         }
     }
     
-    
+    g_end_send_fleg=1;
     pthread_join(thread_id, (void *)&result);
     close(sock);
 
@@ -174,7 +174,7 @@ int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p)
 void *thread_function(void *p)
 {
 	char buffer[PACKMAX];
-	int sock, len;
+	int sock;
     uint32_t * addr;
     int index = 0;
     struct in_addr print_IP;
@@ -185,8 +185,12 @@ void *thread_function(void *p)
 
     addr = (uint32_t *)malloc(sizeof(uint32_t) * 1);
 
-	while((len = read(sock, buffer, PACKMAX))>0)
+	while(!g_end_send_fleg)
     {
+        if(read(sock, buffer, PACKMAX)<=0)
+        {
+            continue;
+        }
 		struct iphdr *ip = (struct iphdr *)buffer;
 		int ip_header_len = ip->ip_hl << 2;
 
@@ -203,7 +207,7 @@ void *thread_function(void *p)
                     break;
                 }
 			}
-		}
+        }
 	}
 
     quick_sort(addr, 0, index-1);
