@@ -25,7 +25,7 @@ void *thread_relay(void *p);
 void INThandler(int sig);
 void print_packet(struct in_addr * host_ip, uint8_t *host_mac, struct in_addr *target_ip, uint8_t *target_mac);
 
-int main(int argc, char **argv)
+int arp_spoof(int argc, char **argv)
 {
     int sock, len,result;
     struct sockaddr_ll sll;
