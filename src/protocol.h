@@ -27,7 +27,7 @@
 #define PACKMAX 4096
 #define ETHMAX 1514
 #define ARPMAX 42
-#define IN_NAME "eth0"
+#define IF_NAME "eth0"
 #define ETHERTYPE_IP 0x0800
 
 struct nic_info
@@ -192,7 +192,7 @@ uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);
 int tcp_half_scan(int argc, char **argv);
 int get_interface_devices(char * arg);
-int relay(uint8_t *dst_mac);
+int relay(uint8_t *dst_mac, char * if_name);
 uint16_t cksum(void *data, uint32_t len);
 int get_info(struct nic_info *nic_info, char *if_name);
 int arp_spoof(int argc, char **argv);

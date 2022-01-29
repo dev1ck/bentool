@@ -2,15 +2,16 @@
 
 int g_end_send_fleg=0;
 
-int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p);
 void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
 
 
-int ping_scan(int argc, char **argv)
+int main(int argc, char **argv)
 {
     char *ptr;
+    char *if_name = IF_NAME;
     struct icmp_packet icmp_p;
+    struct sockaddr_in addr;
     int sock, prefix, result;
     u_int32_t start_ip, end_ip, ip, mask;
     pthread_t thread_id;
@@ -19,6 +20,9 @@ int ping_scan(int argc, char **argv)
     char p_sip[16], p_eip[16];
     time_t start_tm, end_tm, play_tm;
     struct tm* ptimeinfo;
+    struct nic_info info;
+
+    start_ip=end_ip=ip=mask=prefix=0;
 
     start_tm = time(NULL);
     tv.tv_sec = 2;
@@ -34,6 +38,9 @@ int ping_scan(int argc, char **argv)
         perror("setsocket");
         return -1;
     }
+
+    memset(&addr, 0 ,sizeof(addr));
+    addr.sin_family = AF_INET;
 
     memset(&icmp_p,0,sizeof(icmp_p));
     icmp_p.icmp.icmp_type = 8;
@@ -54,8 +61,7 @@ int ping_scan(int argc, char **argv)
             printf("IP Address error\n");
             return -1;
         }
-        
-        if(start_ip>end_ip)
+        else if(start_ip>end_ip)
         {
             ip = start_ip;
             start_ip = end_ip;
@@ -63,30 +69,11 @@ int ping_scan(int argc, char **argv)
         }
         else if(start_ip == end_ip)
         {
-            printf("Send to ICMP Packet : %s\n\n",argv[1]);
-            if(send_ping(sock, start_ip, icmp_p)<0)
-            {
-                perror("sendto");
-                return -1;
-            }
+            ip = start_ip;
+            start_ip = 0;
         }
-        else
-        {
-            save_start_ip.s_addr = htonl(start_ip);
-            save_end_ip.s_addr = htonl(end_ip);
-            
-            strcpy(p_sip,inet_ntoa(save_start_ip));
-            strcpy(p_eip,inet_ntoa(save_end_ip));
-            printf("Send To ICMP Packet : %s ~ %s\n\n",p_sip, p_eip);
-            for(ip = start_ip; ip<=end_ip; ip++)
-            {
-                send_ping(sock, ip, icmp_p);
-                sleep(0.01);
-            }
-        }
-       
     }
-    else
+    else if(argc == 2)
     {
         if(!(ptr=strchr(argv[1],'/')))
         {
@@ -95,13 +82,7 @@ int ping_scan(int argc, char **argv)
             {
                 printf("IP Address error\n");
                 return -1;
-            }
-            printf("Send to ICMP Packet : %s\n\n",argv[1]);
-            if(send_ping(sock, ip, icmp_p)<0)
-            {
-                perror("sendto");
-                return -1;
-            }    
+            }      
         }
         else
         {
@@ -118,28 +99,58 @@ int ping_scan(int argc, char **argv)
             prefix =  atoi(ptr+1);
             if(prefix>32 || prefix < 0)
             {
-                printf("prefix error\n");
+                printf("Prefix error\n");
                 return -1;
             }
             mask = (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
 
             start_ip = (ip&mask)+1;
             end_ip = (ip|~mask)-1;
-
-            save_start_ip.s_addr = htonl(start_ip);
-            save_end_ip.s_addr = htonl(end_ip);
-            
-            strcpy(p_sip,inet_ntoa(save_start_ip));
-            strcpy(p_eip,inet_ntoa(save_end_ip));
-            printf("Send To ICMP Packet : %s ~ %s\n\n",p_sip, p_eip);
-            for(ip = start_ip; ip<=end_ip; ip++)
-            {
-                send_ping(sock, ip, icmp_p);
-                sleep(0.01);
-            }
         }
     }
-    
+    else if(argc == 1)
+    {
+        if(get_info(&info, if_name)<0)
+        {
+            printf("Interface name error, input -i <interface_name> or input IP address\n");
+            return -1;
+        }
+        
+        mask = ntohl(info.maskaddr.s_addr);
+        ip = ntohl(info.in_addr.s_addr);
+
+        start_ip = (ip&mask)+1;
+        end_ip = (ip|~mask)-1;
+    }
+
+    if(!start_ip)
+    {
+        printf("Send to ICMP Packet : %s\n\n",argv[1]);
+        addr.sin_addr.s_addr = htonl(ip);
+       
+        if(sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        {
+            perror("sendto");
+            return -1;
+        }    
+    }
+    else
+    {
+        save_start_ip.s_addr = htonl(start_ip);
+        save_end_ip.s_addr = htonl(end_ip);
+        
+        strcpy(p_sip,inet_ntoa(save_start_ip));
+        strcpy(p_eip,inet_ntoa(save_end_ip));
+        printf("Send To ICMP Packet : %s ~ %s\n\n",p_sip, p_eip);
+        for(ip = start_ip; ip<=end_ip; ip++)
+        {
+            addr.sin_addr.s_addr = htonl(ip);
+            sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr));
+            sleep(0.01);
+        }
+
+    }
+   
     g_end_send_fleg=1;
     pthread_join(thread_id, (void *)&result);
     close(sock);
@@ -149,23 +160,6 @@ int ping_scan(int argc, char **argv)
 
     printf("scanned in %lld seconds\n",play_tm);
     
-
-
-    return 0;
-}
-
-
-
-int send_ping(int sock, u_int32_t ip, struct icmp_packet icmp_p)
-{
-    struct sockaddr_in addr;
-
-    memset(&addr, 0 ,sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(ip);
-
-    if(sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0) return -1;
-
     return 0;
 }
 
@@ -207,10 +201,10 @@ void *thread_function(void *p)
 			}
         }
 	}
-
+    addr = (uint32_t *)realloc(addr, sizeof(uint32_t)*index);
     quick_sort(addr, 0, index-1);
 
-    for(int i=0; addr[i]!=0 ; i++)
+    for(int i=0; i<index ; i++)
     {
         print_IP.s_addr = htonl(addr[i]);
 

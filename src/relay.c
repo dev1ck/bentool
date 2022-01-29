@@ -1,7 +1,6 @@
 #include "protocol.h"
-enum {INDEX, HWADDR, ADDR};
 
-int relay(uint8_t *dst_mac)
+int relay(uint8_t *dst_mac, char *if_name)
 {  
     int sock, len, rlen;
     unsigned char buffer[ETHMAX]={0,};
@@ -20,7 +19,7 @@ int relay(uint8_t *dst_mac)
         return -1;
     }
     
-    get_info(&info, "eth0");
+    get_info(&info, if_name);
 
     memset(&sll, 0x00, sizeof(sll));
 	sll.sll_family = PF_PACKET;
