@@ -30,6 +30,13 @@
 #define IF_NAME "eth0"
 #define ETHERTYPE_IP 0x0800
 
+struct opt
+{
+    int opt_flag;
+    int start_arg;
+    int argc;
+};
+
 struct nic_info
 {
     uint8_t my_mac[6];
@@ -186,7 +193,7 @@ __attribute__((__packed__));
 #endif
 
 void usage(void);
-int ping_scan(int argc, char **argv);
+int ping_scan(int args, ...);
 int tcp_half_scan(int argc, char **argv);
 uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);

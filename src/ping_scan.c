@@ -6,7 +6,7 @@ void *thread_function(void *p);
 void quick_sort(uint32_t * addr, int start, int end);
 
 
-int ping_scan(int argc, char **argv)
+int ping_scan(int args, ...)
 {
     char *ptr;
     char *if_name = IF_NAME;

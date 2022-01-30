@@ -1,178 +1,193 @@
 #include "protocol.h"
 
-#define BUFSIZE 100
-#define not_set_flag 0x0000
-#define o_flag 0x0001
-#define t_flag 0x0002
-#define i_flag 0x0004
-#define set_flag 0x0003
-
-int ping_scan(char *input_IP);
-void help()
-{
-    
-}
-
-int check_entered_option(int argc, char **argv, unsigned short *opt_flag)
-{
-	int i;
-	// check the argv[] option
-    for(i=0; i<argc; i++)
-    {	
-	    if(!strncmp(argv[i], "-o", 2))
-	    {
-		    //strncpy(argv_o_backup, argv[i], strlen(argv[i]));
-		    //argv_backup = argv[i];
-		    *opt_flag += o_flag;
-	    }
-	    else if(!strncmp(argv[i], "-t", 2))
-	    {
-		    //strncpy(argv_t_backup, argv[i], strlen(argv[i]));
-		    //argv_backup = argv[i];
-		    *opt_flag += t_flag;
-	    }
-		else if(!strncmp(argv[i], "-i", 2))
-		{
-			*opt_flag += i_flag;
-		}
-		
-    }
-
-    if(*opt_flag == not_set_flag) return -1;
-}
+#define optionN 6
+enum {sA, sP, sT, pA, aS, i};
 
 int main(int argc, char **argv)
 {
-    int opt,i=0;
-    unsigned short opt_flag= 0;
-    int o_opt_flag=0, t_opt_flag=0;
-    char o_optarg_arr[BUFSIZE] = {0,};
-    char t_optarg_arr[BUFSIZE] = {0,};
-//  char *argv_t_backup=(char*)malloc(sizeof(char *));
-//  char *argv_o_backup=(char*)malloc(sizeof(char *));
-
-    if(argc < 2)
+    char c;
+    struct opt opt[optionN];
+    int i_flag;
+    char *if_name = IF_NAME;
+    
+    for(int i =0;i<optionN;i++)
     {
-		printf("Usage: %s -o <option> -t <type>\n", argv[0]);
-		printf("ex) %s -o scan -t ping\n",argv[0]);
-		exit(1);
+        memset(&opt, 0, sizeof(opt));
     }
-
-    if(check_entered_option(argc, argv, &opt_flag) == -1)
+    while((c=getopt(argc,argv,"s::p::a::i::"))!=-1)
     {
-		fprintf(stderr, "there is no option\n");
-		exit(1);
-    }
-	
-	// check the argument of options - right argument and when user no input option
-    while((opt = getopt(argc, argv, ":o:t:i:h")) != EOF)
-    {
-
-        switch(opt)
+        switch(c)
         {
-            case 'o':
-
-				if(!strncmp(optarg, "scan", 4) || !strncmp(optarg, "spoof", 5))
-				{
-					strncpy(o_optarg_arr, optarg, strlen(optarg));
-				}
-				else
-				{
-					printf("%s -o [scan|spoof]\n", argv[0]);
-				}
+            case 's':
+                if(!optarg || optarg[1])
+                {   
+                    printf("error\n");
+                    exit(1);
+                }
+                char s = optarg[0];
+                switch(s)
+                {
+                    case 'A':
+                        opt[sA].opt_flag=1;
+                        for(opt[sA].start_arg=optind ; optind<argc ;optind++)
+                            if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                                break;
+                        if(opt[sA].start_arg!=optind)
+                        {
+                            opt[sA].argc= optind - opt[sA].start_arg;
+                        }
+                        break;
+                    case 'P':
+                        opt[sP].opt_flag=1;
+                        for(opt[sP].start_arg=optind ; optind<argc ;optind++)
+                            if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                                break;
+                        if(opt[sP].start_arg!=optind)
+                        {
+                            opt[sP].argc= optind - opt[sP].start_arg;
+                        }
+                        break;
+                }
                 break;
-		
-            case 't':
-				if(!strncmp(optarg, "arp", 3) || !strncmp(optarg, "ping", 4) || !strncmp(optarg, "tcp", 3))
-				{
-					strncpy(t_optarg_arr, optarg, strlen(optarg));
-				}
-				else
-				{
-					printf("%s -t [arp|ping|tcp]\n", argv[0]);
-				}
-
+            case 'p':
+                if(!optarg || optarg[1])
+                {   
+                    printf("error\n");
+                    exit(1);
+                }
+                char p = optarg[0];
+                switch(p)
+                {
+                    case 'A':
+                        opt[pA].opt_flag=1;
+                        for(opt[pA].start_arg=optind ; optind<argc ;optind++)
+                            if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                                break;
+                        if(opt[pA].start_arg!=optind)
+                        {
+                            opt[pA].argc= optind - opt[pA].start_arg;
+                        }
+                        break;
+                    default:
+                        printf("No option\n");
+                }
                 break;
-	    
-	    	case 'h':
-				printf("help\n");
-				break;
-
-			case 'i':
-				get_interface_devices(optarg);
-				break;
-
-			case ':':
-				if(optopt =='o') printf("test\n");
-				else if(optopt == 't') printf("test\n");
-				else if(optopt == 'i') get_interface_devices(NULL);
-				break;
-
-	    	case '?':
-				if(optopt == 'o')	printf("%s -o [scan|spoof] \n", argv[0]);
-				else if(optopt == 't')	printf("%s -t [arp|ping|tcp]\n", argv[0]);
-				else if(optopt == 'i') printf("%s\n");
+            case 'i':
+                if(!optarg || optarg[1])
+                {   
+                    opt[i].opt_flag=1;
+                        for(opt[i].start_arg=optind ; optind<argc ;optind++)
+                            if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                                break;
+                        if(opt[i].start_arg!=optind)
+                        {
+                            opt[i].argc= optind - opt[i].start_arg;
+                        }
+                        break;
+                }
+                else if(optarg[0]=='f')
+                {
+                    int if_c;
+                    for(if_c=optind ; if_c<argc ;if_c++)
+                        if(argv[if_c][0] == 0 || argv[if_c][0]=='-')
+                            break;
+                    if(if_c == optind)
+                    {
+                       printf("input interface name\n");
+                       return -1;
+                    }
+                    else if((if_c - optind) > 1)
+                    {
+                        printf("Too many interface name option\n");
+                        return -1;
+                    }
+                    else
+                        if_name = argv[optind];
+                }
+                break;
+            case '?':
+                printf("?optopt : %c\n",optopt);
+                break;
         }
-	//argc -= optind;
-	//argv += optind;
     }
-
-
-	// check turn on one of options and when all flags are set 1
-    if(opt_flag == set_flag)
+    int sum = 0;
+    for(int i =0; i<optionN;i++)
+        sum += opt[i].opt_flag;
+        
+    if(sum==0)
     {
-
-    	if(!strncmp(o_optarg_arr, "scan", 4))
-    	{
-			if(!strncmp(t_optarg_arr, "arp", 3))
-			{
-				if(argc < 7)
-				{
-					//arp_scan_usage();
-					printf("arp_scan_usage()\n");
-					return 0;
-				}
-
-				//arp_scan();
-			}
-			else if(!strncmp(t_optarg_arr, "ping", 4))
-			{
-				if(argc < 6)
-				{
-					//ping_scan_usage();
-					printf("ping_scan_usage()\n");
-					return 0;
-				}
-				//ping_scan(argv[5]);
-			}
-			else if(!strncmp(t_optarg_arr, "tcp", 3))
-			{
-				if(argc < 9)
-				{
-					//half_open_scan_usage();
-					printf("half_open_scan_usage()\n");
-					return 0;
-				}
-				//tcp_half_scan(argc, argv);
-			}
-    	}
-    	else if(!strncmp(o_optarg_arr, "spoof", 5))
-    	{
-	       	if(!strncmp(t_optarg_arr, "arp", 3)) printf("arp_spoofing()\n");
-   		}
+        printf("use option\n");
+        exit(1);
     }
-    else if(opt_flag == o_flag)
+    else if(sum>1)
     {
-	    printf("specify the '-t' option\n");
-	    exit(1);
-    }
-    else if(opt_flag == t_flag)
-    {
-	    printf("specify the '-o' option\n");
-	    exit(1);
+        printf("too many option\n");
+        exit(1);
     }
 
-//    free(argv_t_backup);
-//    free(argv_o_backup);
-    return 0;
+    if(opt[sA].opt_flag)
+    {
+        opt[sA].argc++;
+        switch(opt[sA].argc)
+        {
+            case 1:
+                printf("arp_scan(opt[sA].argc, if_name)\n");
+                break;
+            case 2:
+                printf("arp_scan(opt[sA].argc, if_name,argv[opt[sA].start_arg])\n");
+                break;
+
+            case 3:
+                printf("arp_scan(opt[sA].argc, if_name,argv[opt[sA].start_arg], argv[opt[sA].start_arg+1])\n");
+                break;
+
+            default:
+                printf("Too many arguments\n");
+        }
+    }
+    else if(opt[sP].opt_flag)
+    {
+        opt[sP].argc++;
+        switch(opt[sP].argc)
+        {
+            case 1:
+                ping_scan(opt[sP].argc, if_name);
+                break;
+            case 2:
+                ping_scan(opt[sP].argc, if_name,argv[opt[sP].start_arg]);
+                break;
+
+            case 3:
+                ping_scan(opt[sP].argc, if_name,argv[opt[sP].start_arg], argv[opt[sP].start_arg+1]);
+                break;
+
+            default:
+                printf("Too many arguments\n");
+        }
+
+    }
+    else if(opt[sT].opt_flag)
+    {   
+        opt[sT].argc++;
+
+    }
+    else if(opt[pA].opt_flag)
+    { 
+        opt[pA].argc++;
+    }
+    else if(opt[i].opt_flag)
+    {
+        switch(opt[i].argc)
+        {
+            case 0:
+                get_interface_devices(NULL);
+                break;
+            case 1:
+                get_interface_devices(argv[opt[i].start_arg]);
+                break;
+            default:
+                printf("Too many arguments\n");
+        }
+    }
+return 0;
 }
