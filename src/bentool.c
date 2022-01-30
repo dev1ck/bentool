@@ -1,7 +1,7 @@
 #include "protocol.h"
 
-#define optionN 6
-enum {sA, sP, sT, pA, aS, i};
+#define optN 5
+enum {i, sA, sP, sT, pA};
 
 int main(int argc, char **argv)
 {
@@ -10,12 +10,43 @@ int main(int argc, char **argv)
     char *if_name = IF_NAME;
     int start_arg=0;
     int opt_argc=1;
-    int flag[optionN]={0,};
+    int flag[optN]={0,};
     
-    while((c=getopt(argc,argv,"s::p::i::"))!=-1)
+    while((c=getopt(argc,argv,"i::s::p::"))!=-1)
     {
         switch(c)
         {
+            case 'i':
+                if(!optarg || optarg[1])
+                {   
+                    flag[i]=1;
+                    for(start_arg=optind ; optind<argc ;optind++)
+                        if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                            break;
+                    if(start_arg!=optind)
+                        opt_argc += optind -start_arg;
+                    break;
+                }
+                else if(optarg[0]=='f')
+                {
+                    int if_c;
+                    for(if_c=optind ; if_c<argc ;if_c++)
+                        if(argv[if_c][0] == 0 || argv[if_c][0]=='-')
+                            break;
+                    if(if_c == optind)
+                    {
+                       printf("input interface name\n");
+                       return -1;
+                    }
+                    else if((if_c - optind) > 1)
+                    {
+                        printf("Too many interface name option\n");
+                        return -1;
+                    }
+                    else
+                        if_name = argv[optind];
+                }
+                break;
             case 's':
                 if(!optarg || optarg[1])
                 {   
@@ -64,44 +95,12 @@ int main(int argc, char **argv)
                         printf("No option\n");
                 }
                 break;
-            case 'i':
-                if(!optarg || optarg[1])
-                {   
-                    flag[i]=1;
-                    for(start_arg=optind ; optind<argc ;optind++)
-                        if(argv[optind][0] == 0 || argv[optind][0]=='-')
-                            break;
-                    if(start_arg!=optind)
-                        opt_argc += optind -start_arg;
-                    break;
-                }
-                else if(optarg[0]=='f')
-                {
-                    int if_c;
-                    for(if_c=optind ; if_c<argc ;if_c++)
-                        if(argv[if_c][0] == 0 || argv[if_c][0]=='-')
-                            break;
-                    if(if_c == optind)
-                    {
-                       printf("input interface name\n");
-                       return -1;
-                    }
-                    else if((if_c - optind) > 1)
-                    {
-                        printf("Too many interface name option\n");
-                        return -1;
-                    }
-                    else
-                        if_name = argv[optind];
-                }
-                break;
             case '?':
                 return -1;
-                break;
         }
     }
     int sum = 0;
-    for(int i =0; i<optionN;i++)
+    for(int i =0; i<optN;i++)
         sum += flag[i];
         
     if(sum==0)
@@ -115,7 +114,21 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if(flag[sA])
+    if(flag[i])
+    {
+        switch(opt_argc)
+        {
+            case 1:
+                get_interface_devices(NULL);
+                break;
+            case 2:
+                get_interface_devices(argv[start_arg]);
+                break;
+            default:
+                printf("Too many arguments\n");
+        }
+    }
+    else if(flag[sA])
     {
         switch(opt_argc)
         {
@@ -177,19 +190,6 @@ int main(int argc, char **argv)
                 printf("Incorrect use\n");
         }
     }
-    else if(flag[i])
-    {
-        switch(opt_argc)
-        {
-            case 1:
-                get_interface_devices(NULL);
-                break;
-            case 2:
-                get_interface_devices(argv[start_arg]);
-                break;
-            default:
-                printf("Too many arguments\n");
-        }
-    }
+    
 return 0;
 }
