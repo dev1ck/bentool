@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     {
         memset(&opt, 0, sizeof(opt));
     }
-    while((c=getopt(argc,argv,"s::p::a::i::"))!=-1)
+    while((c=getopt(argc,argv,"s::p::i::"))!=-1)
     {
         switch(c)
         {
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
                 }
                 break;
             case '?':
-                printf("?optopt : %c\n",optopt);
+                return -1;
                 break;
         }
     }
@@ -117,12 +117,12 @@ int main(int argc, char **argv)
     if(sum==0)
     {
         printf("use option\n");
-        exit(1);
+        return -1;
     }
     else if(sum>1)
     {
         printf("too many option\n");
-        exit(1);
+        return -1;
     }
 
     if(opt[sA].opt_flag)
@@ -136,11 +136,9 @@ int main(int argc, char **argv)
             case 2:
                 printf("arp_scan(opt[sA].argc, if_name,argv[opt[sA].start_arg])\n");
                 break;
-
             case 3:
                 printf("arp_scan(opt[sA].argc, if_name,argv[opt[sA].start_arg], argv[opt[sA].start_arg+1])\n");
                 break;
-
             default:
                 printf("Too many arguments\n");
         }
@@ -156,24 +154,42 @@ int main(int argc, char **argv)
             case 2:
                 ping_scan(opt[sP].argc, if_name,argv[opt[sP].start_arg]);
                 break;
-
             case 3:
                 ping_scan(opt[sP].argc, if_name,argv[opt[sP].start_arg], argv[opt[sP].start_arg+1]);
                 break;
-
             default:
-                printf("Too many arguments\n");
+                printf("Incorrect use\n");
         }
 
     }
     else if(opt[sT].opt_flag)
     {   
         opt[sT].argc++;
+        switch(opt[sT].argc)
+        {
+            case 2:
+                printf("tcp_scan(opt[sT].argc, if_name,argv[opt[sT].start_arg])\n");
+                break;
+            case 3:
+                printf("tcp_scan(opt[sT].argc, if_name,argv[opt[sT].start_arg], argv[opt[sT].start_arg+1])\n");
+                break;
+            default:
+                printf("Incorrect use\n");
+        }
 
     }
     else if(opt[pA].opt_flag)
     { 
         opt[pA].argc++;
+        switch(opt[pA].argc)
+        {
+            case 3:
+                arp_spoof(if_name, argv[opt[pA].start_arg], argv[opt[pA].start_arg+1]);
+                break;
+
+            default:
+                printf("Incorrect use\n");
+        }
     }
     else if(opt[i].opt_flag)
     {

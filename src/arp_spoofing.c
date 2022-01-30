@@ -25,7 +25,7 @@ void *thread_relay(void *p);
 void INThandler(int sig);
 void print_packet(struct in_addr * host_ip, uint8_t *host_mac, struct in_addr *target_ip, uint8_t *target_mac);
 
-int arp_spoof(int argc, char **argv)
+int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
 {
     int sock, len,result;
     struct sockaddr_ll sll;
@@ -36,7 +36,7 @@ int arp_spoof(int argc, char **argv)
     struct thread_arg thread_arg;
     struct relay_thread_arg r_arg;
     struct arp_data *arp_data;
-    char * if_name = IF_NAME;
+    char * if_name = i_if_name;
     
 
     if((sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL)))<0)
@@ -50,12 +50,12 @@ int arp_spoof(int argc, char **argv)
         printf("Interface Name error\n");
         return -1;
     }
-    if(!inet_aton(argv[1],&target_ip))
+    if(!inet_aton(i_target_ip,&target_ip))
     {
         printf("Target IP error\n");
         return -1;
     }
-    if(!inet_aton(argv[2],&host_ip))
+    if(!inet_aton(i_host_IP,&host_ip))
     {
          printf("Host IP error\n");
          return -1;

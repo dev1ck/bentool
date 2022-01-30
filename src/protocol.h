@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -202,5 +203,5 @@ int get_interface_devices(char * arg);
 int relay(uint8_t *dst_mac, char * if_name);
 uint16_t cksum(void *data, uint32_t len);
 int get_info(struct nic_info *nic_info, char *if_name);
-int arp_spoof(int argc, char **argv);
+int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP);
 #endif

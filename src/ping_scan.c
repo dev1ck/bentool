@@ -9,7 +9,8 @@ void quick_sort(uint32_t * addr, int start, int end);
 int ping_scan(int args, ...)
 {
     char *ptr;
-    char *if_name = IF_NAME;
+    char *if_name;
+    char *input_data;
     struct icmp_packet icmp_p;
     struct sockaddr_in addr;
     int sock, prefix, result;
@@ -21,7 +22,12 @@ int ping_scan(int args, ...)
     time_t start_tm, end_tm, play_tm;
     struct tm* ptimeinfo;
     struct nic_info info;
+    va_list ap;
 
+    va_start(ap, args);
+
+    if_name = va_arg(ap,char *);
+    
     start_ip=end_ip=ip=mask=prefix=0;
 
     start_tm = time(NULL);
@@ -51,11 +57,12 @@ int ping_scan(int args, ...)
 
     pthread_create(&thread_id, NULL, thread_function, &sock);
 
-    if(argc == 3)
+    if(args == 3)
     {
-        start_ip = ntohl(inet_addr(argv[1]));
-        end_ip = ntohl(inet_addr(argv[2]));
-        
+        start_ip = ntohl(inet_addr(va_arg(ap,char *)));
+        end_ip = ntohl(inet_addr(va_arg(ap,char *)));
+        va_end(ap);
+
         if(start_ip == -1 || end_ip == -1)
         {
             printf("IP Address error\n");
@@ -73,11 +80,12 @@ int ping_scan(int args, ...)
             start_ip = 0;
         }
     }
-    else if(argc == 2)
+    else if(args == 2)
     {
-        if(!(ptr=strchr(argv[1],'/')))
+        char * input_data = va_arg(ap,char *);
+        if(!(ptr=strchr(input_data,'/')))
         {
-            ip = ntohl(inet_addr(argv[1]));
+            ip = ntohl(inet_addr(input_data));
             if(ip == -1)
             {
                 printf("IP Address error\n");
@@ -86,9 +94,9 @@ int ping_scan(int args, ...)
         }
         else
         {
-            strtok(argv[1],"/");
+            strtok(input_data,"/");
 
-            ip = ntohl(inet_addr(argv[1]));
+            ip = ntohl(inet_addr(input_data));
 
             if(ip == -1)
             {
@@ -107,12 +115,13 @@ int ping_scan(int args, ...)
             start_ip = (ip&mask)+1;
             end_ip = (ip|~mask)-1;
         }
+        va_end(ap);
     }
-    else if(argc == 1)
+    else if(args == 1)
     {
         if(get_info(&info, if_name)<0)
         {
-            printf("Interface name error, input -i <interface_name> or input IP address\n");
+            printf("Interface name error, input -if <interface_name> or don't use -if option\n");
             return -1;
         }
         
@@ -121,11 +130,12 @@ int ping_scan(int args, ...)
 
         start_ip = (ip&mask)+1;
         end_ip = (ip|~mask)-1;
+        va_end(ap);
     }
 
     if(!start_ip)
     {
-        printf("Send to ICMP Packet : %s\n\n",argv[1]);
+        printf("Send to ICMP Packet : %s\n\n",input_data);
         addr.sin_addr.s_addr = htonl(ip);
        
         if(sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
