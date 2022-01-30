@@ -31,13 +31,6 @@
 #define IF_NAME "eth0"
 #define ETHERTYPE_IP 0x0800
 
-struct opt
-{
-    int opt_flag;
-    int start_arg;
-    int argc;
-};
-
 struct nic_info
 {
     uint8_t my_mac[6];

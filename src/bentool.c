@@ -6,14 +6,12 @@ enum {sA, sP, sT, pA, aS, i};
 int main(int argc, char **argv)
 {
     char c;
-    struct opt opt[optionN];
     int i_flag;
     char *if_name = IF_NAME;
+    int start_arg=0;
+    int opt_argc=1;
+    int flag[optionN]={0,};
     
-    for(int i =0;i<optionN;i++)
-    {
-        memset(&opt, 0, sizeof(opt));
-    }
     while((c=getopt(argc,argv,"s::p::i::"))!=-1)
     {
         switch(c)
@@ -28,24 +26,20 @@ int main(int argc, char **argv)
                 switch(s)
                 {
                     case 'A':
-                        opt[sA].opt_flag=1;
-                        for(opt[sA].start_arg=optind ; optind<argc ;optind++)
+                        flag[sA]=1;
+                        for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
-                        if(opt[sA].start_arg!=optind)
-                        {
-                            opt[sA].argc= optind - opt[sA].start_arg;
-                        }
+                        if(start_arg!=optind)
+                            opt_argc += optind -start_arg;
                         break;
                     case 'P':
-                        opt[sP].opt_flag=1;
-                        for(opt[sP].start_arg=optind ; optind<argc ;optind++)
+                        flag[sP]=1;
+                        for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
-                        if(opt[sP].start_arg!=optind)
-                        {
-                            opt[sP].argc= optind - opt[sP].start_arg;
-                        }
+                        if(start_arg!=optind)
+                            opt_argc += optind -start_arg;
                         break;
                 }
                 break;
@@ -59,14 +53,12 @@ int main(int argc, char **argv)
                 switch(p)
                 {
                     case 'A':
-                        opt[pA].opt_flag=1;
-                        for(opt[pA].start_arg=optind ; optind<argc ;optind++)
+                        flag[pA]=1;
+                        for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
-                        if(opt[pA].start_arg!=optind)
-                        {
-                            opt[pA].argc= optind - opt[pA].start_arg;
-                        }
+                        if(start_arg!=optind)
+                            opt_argc += optind -start_arg;
                         break;
                     default:
                         printf("No option\n");
@@ -75,15 +67,13 @@ int main(int argc, char **argv)
             case 'i':
                 if(!optarg || optarg[1])
                 {   
-                    opt[i].opt_flag=1;
-                        for(opt[i].start_arg=optind ; optind<argc ;optind++)
-                            if(argv[optind][0] == 0 || argv[optind][0]=='-')
-                                break;
-                        if(opt[i].start_arg!=optind)
-                        {
-                            opt[i].argc= optind - opt[i].start_arg;
-                        }
-                        break;
+                    flag[i]=1;
+                    for(start_arg=optind ; optind<argc ;optind++)
+                        if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                            break;
+                    if(start_arg!=optind)
+                        opt_argc += optind -start_arg;
+                    break;
                 }
                 else if(optarg[0]=='f')
                 {
@@ -112,7 +102,7 @@ int main(int argc, char **argv)
     }
     int sum = 0;
     for(int i =0; i<optionN;i++)
-        sum += opt[i].opt_flag;
+        sum += flag[i];
         
     if(sum==0)
     {
@@ -125,81 +115,77 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    if(opt[sA].opt_flag)
+    if(flag[sA])
     {
-        opt[sA].argc++;
-        switch(opt[sA].argc)
+        switch(opt_argc)
         {
             case 1:
-                printf("arp_scan(opt[sA].argc, if_name)\n");
+                printf("opt_argc, if_name\n");
                 break;
             case 2:
-                printf("arp_scan(opt[sA].argc, if_name,argv[opt[sA].start_arg])\n");
+                printf("opt_argc, if_name,argv[start_arg])\n");
                 break;
             case 3:
-                printf("arp_scan(opt[sA].argc, if_name,argv[opt[sA].start_arg], argv[opt[sA].start_arg+1])\n");
+                printf("opt_argc, if_name,if_name,argv[start_arg], argv[start_arg+1])\n");
                 break;
             default:
                 printf("Too many arguments\n");
         }
     }
-    else if(opt[sP].opt_flag)
+    else if(flag[sP])
     {
-        opt[sP].argc++;
-        switch(opt[sP].argc)
+        switch(opt_argc)
         {
             case 1:
-                ping_scan(opt[sP].argc, if_name);
+                ping_scan(opt_argc, if_name);
                 break;
             case 2:
-                ping_scan(opt[sP].argc, if_name,argv[opt[sP].start_arg]);
+                ping_scan(opt_argc, if_name,argv[start_arg]);
                 break;
             case 3:
-                ping_scan(opt[sP].argc, if_name,argv[opt[sP].start_arg], argv[opt[sP].start_arg+1]);
+                ping_scan(opt_argc, if_name,argv[start_arg], argv[start_arg+1]);
                 break;
             default:
                 printf("Incorrect use\n");
         }
 
     }
-    else if(opt[sT].opt_flag)
+    else if(flag[sT])
     {   
-        opt[sT].argc++;
-        switch(opt[sT].argc)
+        switch(opt_argc)
         {
             case 2:
-                printf("tcp_scan(opt[sT].argc, if_name,argv[opt[sT].start_arg])\n");
+                printf("tcp_scan(opt_argc, if_name,argv[start_arg])\n");
                 break;
             case 3:
-                printf("tcp_scan(opt[sT].argc, if_name,argv[opt[sT].start_arg], argv[opt[sT].start_arg+1])\n");
+                printf("tcp_scan(opt_argc, if_name,argv[start_arg], argv[start_arg+1])\n");
                 break;
             default:
                 printf("Incorrect use\n");
         }
 
     }
-    else if(opt[pA].opt_flag)
+    else if(flag[pA])
     { 
-        opt[pA].argc++;
-        switch(opt[pA].argc)
+        switch(opt_argc)
         {
             case 3:
-                arp_spoof(if_name, argv[opt[pA].start_arg], argv[opt[pA].start_arg+1]);
+                arp_spoof(if_name, argv[start_arg], argv[start_arg+1]);
                 break;
 
             default:
                 printf("Incorrect use\n");
         }
     }
-    else if(opt[i].opt_flag)
+    else if(flag[i])
     {
-        switch(opt[i].argc)
+        switch(opt_argc)
         {
-            case 0:
+            case 1:
                 get_interface_devices(NULL);
                 break;
-            case 1:
-                get_interface_devices(argv[opt[i].start_arg]);
+            case 2:
+                get_interface_devices(argv[start_arg]);
                 break;
             default:
                 printf("Too many arguments\n");
