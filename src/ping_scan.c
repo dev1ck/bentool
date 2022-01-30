@@ -156,7 +156,7 @@ int ping_scan(int args, ...)
         {
             addr.sin_addr.s_addr = htonl(ip);
             sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr));
-            sleep(0.01);
+            usleep(1);
         }
 
     }
