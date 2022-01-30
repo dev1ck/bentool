@@ -3,7 +3,7 @@
 #define optN 5
 enum {i, sA, sP, sT, pA};
 
-int main(int argc, char **argv)
+int bentool_main(int argc, char **argv)
 {
     char c;
     int i_flag;

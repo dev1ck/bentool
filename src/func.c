@@ -1,5 +1,176 @@
 #include "protocol.h"
 
+int get_interface_devices(char *arg)
+{
+    pcap_if_t *alldevs, *alldevs_device;
+    int i = 0;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    struct pcap_addr *if_addr;
+
+    
+    if(pcap_findalldevs(&alldevs, errbuf) < 0)
+    {
+        printf("pcap_findalldevs error\n");
+        return 1;
+    }
+
+    if(!alldevs)
+    {
+        printf("%s\n", errbuf);
+    }
+
+    if(arg == NULL)
+    {
+        for(alldevs_device=alldevs; alldevs_device; alldevs_device=alldevs_device->next)
+        {
+            printf("%d. interface name : %s", ++i, alldevs_device->name);
+
+            if(alldevs_device->description)
+                printf(" (%s)", alldevs_device->description);
+        
+            if(alldevs_device->addresses)
+            {
+                for(if_addr=alldevs_device->addresses; if_addr; if_addr=if_addr->next)
+                { 
+                    struct sockaddr_in *in_addr = (struct sockaddr_in *)if_addr->addr;
+                    struct sockaddr_in *in_addr_netmask = (struct sockaddr_in*)if_addr->netmask;
+                    struct sockaddr_in *in_addr_broadaddr = (struct sockaddr_in*)if_addr->broadaddr; 
+
+                    switch(if_addr->addr->sa_family)
+                    {
+                        case AF_INET:
+                            printf("\nIP : %s", inet_ntoa(in_addr->sin_addr));
+                            printf("\nnetmask : %s", inet_ntoa(in_addr_netmask->sin_addr));
+                            if(alldevs_device->flags != 55)
+                            printf("\nbroadcast address : %s", inet_ntoa(in_addr_broadaddr->sin_addr));
+                            //return in_addr->sin_addr;
+                            break;
+                    }
+                }
+            }
+            printf("\n\n");
+        }
+    }
+    else if(arg)
+    {
+        for(alldevs_device=alldevs; alldevs_device; alldevs_device=alldevs_device->next)
+        {
+            if(!strncmp(alldevs_device->name, arg, strlen(arg))) break;
+        }
+        
+        printf("interface name : %s\n", alldevs_device->name);
+        if(alldevs_device->description)
+            printf(" (%s)", alldevs_device->description);
+        
+        if(alldevs_device->addresses)
+        {
+            for(if_addr=alldevs_device->addresses; if_addr; if_addr=if_addr->next)
+            { 
+                struct sockaddr_in *in_addr = (struct sockaddr_in *)if_addr->addr;
+                struct sockaddr_in *in_addr_netmask = (struct sockaddr_in*)if_addr->netmask;
+                struct sockaddr_in *in_addr_broadaddr = (struct sockaddr_in*)if_addr->broadaddr; 
+                switch(if_addr->addr->sa_family)
+                {
+                    case AF_INET:
+                        printf("\nIP : %s", inet_ntoa(in_addr->sin_addr));
+                        printf("\nnetmask : %s", inet_ntoa(in_addr_netmask->sin_addr));
+                        if(alldevs_device->flags != 55)
+                        printf("\nbroadcast address : %s", inet_ntoa(in_addr_broadaddr->sin_addr));
+                        break;
+                }
+            }
+        }
+    }
+    pcap_freealldevs(alldevs);
+    return 0;
+}
+
+int get_info(struct nic_info *nic_info, char *if_name)
+{
+    int sock, i, num=30;
+    struct ifconf if_conf;
+    struct ifreq *ifr;
+    struct sockaddr_in *addr;
+
+    if((sock = socket(PF_INET, SOCK_STREAM,0)) < 0)
+    {
+        perror("socket ");
+        return -1;
+    }
+
+    memset(&if_conf, 0, sizeof(if_conf));
+    if_conf.ifc_len = sizeof(struct ifreq) * num;
+    if_conf.ifc_buf = (__caddr_t)malloc(if_conf.ifc_len);
+    memset(if_conf.ifc_buf, 0, sizeof(if_conf.ifc_len));
+
+    if(ioctl(sock, SIOCGIFCONF, (char *)&if_conf) < 0)
+    {
+        perror("ioctl() - get conf ");
+        free(if_conf.ifc_buf);
+        close(sock);
+        return -1;
+    }
+
+    
+    for(ifr = if_conf.ifc_req; ifr->ifr_name[0]; ifr++)
+    {
+        if(!strcmp(ifr->ifr_name, if_name))
+        {
+            addr = (struct sockaddr_in*)&ifr->ifr_addr;
+            nic_info->in_addr.s_addr = addr->sin_addr.s_addr;
+
+            if(ntohl(nic_info->in_addr.s_addr) != INADDR_LOOPBACK)
+            {
+                if(ioctl(sock, SIOCGIFHWADDR, (char*)ifr) < 0)
+                {
+                    perror("ioctl() - get mac address ");
+                    free(if_conf.ifc_buf);
+                    close(sock);
+                    return -1;
+                }
+                memcpy(nic_info->my_mac, ifr->ifr_hwaddr.sa_data, 6);
+            }
+
+            if(ioctl(sock, SIOCGIFINDEX, (char*)ifr) < 0)
+            {
+                perror("ioctl() - get ifindex ");
+                free(if_conf.ifc_buf);
+                close(sock);
+                return -1;
+            }
+            nic_info->ifindex = ifr->ifr_ifindex;
+
+            if(ioctl(sock, SIOCGIFBRDADDR, (char*)ifr) < 0)
+            {
+                perror("ioctl() - get broadcast addr ");
+                free(if_conf.ifc_buf);
+                close(sock);
+                return -1;
+            }
+            addr = (struct sockaddr_in*)&ifr->ifr_broadaddr;
+            nic_info->broadaddr.s_addr = addr->sin_addr.s_addr;
+
+            if(ioctl(sock, SIOCGIFNETMASK, (char *)ifr) < 0)
+            {
+                perror("ioctl() - get ifindex ");
+                free(if_conf.ifc_buf);
+                close(sock);
+                return -1;
+            }
+            addr = (struct sockaddr_in*)&ifr->ifr_addr;
+            nic_info->maskaddr.s_addr = addr->sin_addr.s_addr;
+        
+
+            free(if_conf.ifc_buf);
+            close(sock);
+            return 0;
+        }       
+    }
+    free(if_conf.ifc_buf);
+    close(sock);
+    return -1;
+}
+
 int relay(uint8_t *dst_mac, char *if_name)
 {  
     int sock, len, rlen;
@@ -142,90 +313,4 @@ uint16_t cksum(void *data, uint32_t len)
 		sum = (sum & 0xffff) + (sum >> 16);
 
 	return (sum == 0xffff)?sum:~sum;
-}
-
-int get_info(struct nic_info *nic_info, char *if_name)
-{
-    int sock, i, num=30;
-    struct ifconf if_conf;
-    struct ifreq *ifr;
-    struct sockaddr_in *addr;
-
-    if((sock = socket(PF_INET, SOCK_STREAM,0)) < 0)
-    {
-        perror("socket ");
-        return -1;
-    }
-
-    memset(&if_conf, 0, sizeof(if_conf));
-    if_conf.ifc_len = sizeof(struct ifreq) * num;
-    if_conf.ifc_buf = (__caddr_t)malloc(if_conf.ifc_len);
-    memset(if_conf.ifc_buf, 0, sizeof(if_conf.ifc_len));
-
-    if(ioctl(sock, SIOCGIFCONF, (char *)&if_conf) < 0)
-    {
-        perror("ioctl() - get conf ");
-        free(if_conf.ifc_buf);
-        close(sock);
-        return -1;
-    }
-
-    
-    for(ifr = if_conf.ifc_req; ifr->ifr_name[0]; ifr++)
-    {
-        if(!strcmp(ifr->ifr_name, if_name))
-        {
-            addr = (struct sockaddr_in*)&ifr->ifr_addr;
-            nic_info->in_addr.s_addr = addr->sin_addr.s_addr;
-
-            if(ntohl(nic_info->in_addr.s_addr) != INADDR_LOOPBACK)
-            {
-                if(ioctl(sock, SIOCGIFHWADDR, (char*)ifr) < 0)
-                {
-                    perror("ioctl() - get mac address ");
-                    free(if_conf.ifc_buf);
-                    close(sock);
-                    return -1;
-                }
-                memcpy(nic_info->my_mac, ifr->ifr_hwaddr.sa_data, 6);
-            }
-
-            if(ioctl(sock, SIOCGIFINDEX, (char*)ifr) < 0)
-            {
-                perror("ioctl() - get ifindex ");
-                free(if_conf.ifc_buf);
-                close(sock);
-                return -1;
-            }
-            nic_info->ifindex = ifr->ifr_ifindex;
-
-            if(ioctl(sock, SIOCGIFBRDADDR, (char*)ifr) < 0)
-            {
-                perror("ioctl() - get broadcast addr ");
-                free(if_conf.ifc_buf);
-                close(sock);
-                return -1;
-            }
-            addr = (struct sockaddr_in*)&ifr->ifr_broadaddr;
-            nic_info->broadaddr.s_addr = addr->sin_addr.s_addr;
-
-            if(ioctl(sock, SIOCGIFNETMASK, (char *)ifr) < 0)
-            {
-                perror("ioctl() - get ifindex ");
-                free(if_conf.ifc_buf);
-                close(sock);
-                return -1;
-            }
-            addr = (struct sockaddr_in*)&ifr->ifr_addr;
-            nic_info->maskaddr.s_addr = addr->sin_addr.s_addr;
-        
-
-            free(if_conf.ifc_buf);
-            close(sock);
-            return 0;
-        }       
-    }
-    free(if_conf.ifc_buf);
-    close(sock);
-    return -1;
 }

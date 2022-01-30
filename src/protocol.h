@@ -186,6 +186,7 @@ struct icmp_packet
 __attribute__((__packed__));
 #endif
 
+int bentool_main(int argc, char **argv);
 void usage(void);
 int ping_scan(int args, ...);
 int tcp_half_scan(int argc, char **argv);
