@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
     for(port = start_port; port <= end_port; port++)
     {
-        make_tcp_header_v2(&packet, my_ip, 123, addr.sin_addr, port, 123, 0, TH_SYN);
+        make_tcp_header_v2(&packet, my_ip, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
 
         if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {

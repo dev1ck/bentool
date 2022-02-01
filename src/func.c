@@ -375,3 +375,18 @@ void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip,
     iphdr->ip_sum = 0;
     iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
 }
+
+void make_ip_header_v2(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen)
+{
+    iphdr->ip_v = 4;
+    iphdr->ip_hl = sizeof(struct iphdr) >> 2;
+    iphdr->ip_id = 100;
+    iphdr->ip_len = htons(sizeof(struct iphdr) + datalen);
+    iphdr->ip_off = htons(0);
+    iphdr->ip_ttl = 128;
+    iphdr->ip_p = IPPROTO_TCP;
+    iphdr->ip_src = src_ip;
+    iphdr->ip_dst = dst_ip;
+    iphdr->ip_sum = 0;
+    iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
+}
