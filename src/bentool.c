@@ -1,7 +1,7 @@
 #include "protocol.h"
 
-#define optN 5
-enum {i, sA, sP, sT, pA};
+#define optN 6
+enum {i, sA, sP, sT, pA, aS};
 
 int bentool_main(int argc, char **argv)
 {
@@ -12,12 +12,12 @@ int bentool_main(int argc, char **argv)
     int opt_argc=1;
     int flag[optN]={0,};
     
-    while((c=getopt(argc,argv,"i::s::p::"))!=-1)
+    while((c=getopt(argc,argv,"i::s::p::a::"))!=-1)
     {
         switch(c)
         {
             case 'i':
-                if(!optarg || optarg[1])
+                if(!optarg)
                 {   
                     flag[i]=1;
                     for(start_arg=optind ; optind<argc ;optind++)
@@ -29,6 +29,11 @@ int bentool_main(int argc, char **argv)
                 }
                 else if(optarg[0]=='f')
                 {
+                    if(optarg[1])
+                    {
+                        printf("Option error\n");
+                        return -1;
+                    }
                     int if_c;
                     for(if_c=optind ; if_c<argc ;if_c++)
                         if(argv[if_c][0] == 0 || argv[if_c][0]=='-')
@@ -50,8 +55,8 @@ int bentool_main(int argc, char **argv)
             case 's':
                 if(!optarg || optarg[1])
                 {   
-                    printf("error\n");
-                    exit(1);
+                    printf("Option error\n");
+                    return -1;
                 }
                 char s = optarg[0];
                 switch(s)
@@ -77,8 +82,8 @@ int bentool_main(int argc, char **argv)
             case 'p':
                 if(!optarg || optarg[1])
                 {   
-                    printf("error\n");
-                    exit(1);
+                    printf("Option error\n");
+                    return -1;
                 }
                 char p = optarg[0];
                 switch(p)
@@ -93,6 +98,25 @@ int bentool_main(int argc, char **argv)
                         break;
                     default:
                         printf("No option\n");
+                }
+                break;
+            case 'a':
+                if(!optarg || optarg[1])
+                {   
+                    printf("Option error\n");
+                    return -1;
+                }
+                char a = optarg[0];
+                switch(a)
+                {
+                    case 'S':
+                        flag[aS]=1;
+                        for(start_arg=optind ; optind<argc ;optind++)
+                            if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                                break;
+                        if(start_arg!=optind)
+                            opt_argc += optind -start_arg;
+                        break;
                 }
                 break;
             case '?':
@@ -190,6 +214,18 @@ int bentool_main(int argc, char **argv)
                 printf("Incorrect use\n");
         }
     }
+    else if(flag[aS])
+    {
+        switch(opt_argc)
+        {
+            case 3:
+                //syn_flood(if_name, argv[start_arg], argv[start_arg+1]);
+                break;
+
+            default:
+                printf("Incorrect use\n");
+        }
+    }
     
-return 0;
+    return 0;
 }

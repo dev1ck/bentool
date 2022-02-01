@@ -1,10 +1,8 @@
 #include "protocol.h"
 
-#define PSEUDO_HEADER_LEN 12
-
 void  strmac_to_buffer(const char *str, uint8_t *mac);
 
-enum {ARGV_CMD, ARGV_GARBAGE_1, ARGV_GARBAGE_2, ARGV_GARBAGE_3, ARGV_GARBAGE_4, ARGV_MY_IP, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
+enum {ARGV_CMD, ARGV_MY_IP, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
 
 void *tcp_thread_function(void *p);
 
@@ -15,16 +13,16 @@ struct param_data
     uint16_t end_port;
 };
 
-int tcp_half_scan(int argc, char **argv)
+int main(int argc, char **argv)
 {
     pthread_t thread_id;
     int on = 1;
     struct sockaddr_in addr;
+    struct in_addr my_ip;
     uint16_t start_port, end_port, port;
     struct param_data param;
-    struct tcp_packet packet;
-
-    if(argc<=5)
+    struct tcphdr packet;
+    if(argc<=4)
     {
         printf("Usage : %s [my ip] [target ip] [start port] [end port]\n", argv[ARGV_CMD]);
         return 1;
@@ -36,11 +34,6 @@ int tcp_half_scan(int argc, char **argv)
         return 1;
     }
 
-    if(setsockopt(param.sock, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0)
-    {
-        perror("setsockopt ");
-        return 1;
-    }
     param.start_port = start_port = (uint16_t)atoi(argv[ARGV_START_PORT]);
     param.end_port = end_port = (uint16_t)atoi(argv[ARGV_END_PORT]);
 
@@ -50,16 +43,15 @@ int tcp_half_scan(int argc, char **argv)
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(argv[ARGV_TARGET_IP]);
 
-    memset(&packet, 0x00, sizeof(packet));
+    memset(&packet, 0, sizeof(packet));
 
-    
+    inet_aton(argv[ARGV_MY_IP] ,&my_ip);
 
-    for(port = start_port; port <= end_port; port += 1)
+    for(port = start_port; port <= end_port; port++)
     {
-        make_tcp_header(&packet, argv[ARGV_MY_IP], rand(), argv[ARGV_TARGET_IP], port, rand(), 0, TH_SYN);
-        make_ip_header(&(packet.iphdr), argv[ARGV_MY_IP], argv[ARGV_TARGET_IP], sizeof(struct tcphdr));
+        make_tcp_header_v2(&packet, my_ip, 123, addr.sin_addr, port, 123, 0, TH_SYN);
 
-        if(sendto(param.sock, &(packet.iphdr), sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             perror("sendto ");
             break;
@@ -96,7 +88,6 @@ void *tcp_thread_function(void *p)
 
     return 0;
 }
-
 
 void strmac_to_buffer(const char *str, uint8_t *mac)
 {

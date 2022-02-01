@@ -31,6 +31,7 @@
 #define ARPMAX 42
 #define IF_NAME "eth0"
 #define ETHERTYPE_IP 0x0800
+#define PSEUDO_HEADER_LEN 12
 
 struct nic_info
 {
@@ -141,10 +142,42 @@ __attribute__((__packed__));
 #ifndef __linux__
     #pragma pack(push, 1);
 #endif
+struct pseudohdr
+{
+    struct in_addr ip_src, ip_dst;
+    uint8_t reserved;
+    uint8_t protocol_type;
+    uint16_t tcp_total_lenght;
+}
+#ifndef __linux
+    ;
+    #pragma pack(pop)
+#else
+__attribute__((__packed__));
+#endif
+
+#ifndef __linux__
+    #pragma pack(push, 1);
+#endif
 struct tcp_packet
 {
     struct etherhdr ether_header;
     struct iphdr iphdr;
+    struct tcphdr tcphdr;
+}
+#ifndef __linux
+    ;
+    #pragma pack(pop)
+#else
+__attribute__((__packed__));
+#endif
+
+#ifndef __linux__
+    #pragma pack(push, 1);
+#endif
+struct tcp_cksum_hdr
+{
+    struct pseudohdr pseudohdr;
     struct tcphdr tcphdr;
 }
 #ifndef __linux
@@ -199,4 +232,8 @@ int relay(uint8_t *dst_mac, char * if_name);
 uint16_t cksum(void *data, uint32_t len);
 int get_info(struct nic_info *nic_info, char *if_name);
 int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP);
+void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
+void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
+void make_tcp_header_v2(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
+
 #endif
