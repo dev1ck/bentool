@@ -235,5 +235,6 @@ void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src
 void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
 void make_tcp_header_v2(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
 void make_ip_header_v2(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
+int syn_flood(char* ip, char *port);
 
 #endif
