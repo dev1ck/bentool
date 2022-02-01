@@ -9,6 +9,7 @@
 #include <stdarg.h>
 #include <signal.h>
 #include <unistd.h>
+#include <netdb.h>
 #include <pthread.h>
 #include <time.h>
 #include <errno.h>
