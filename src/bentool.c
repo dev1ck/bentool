@@ -1,7 +1,7 @@
 #include "protocol.h"
 
 #define optN 6
-enum {i, sA, sP, sT, pA, aS};
+enum {i, sA, sP, sH, pA, aS};
 
 int bentool_main(int argc, char **argv)
 {
@@ -49,8 +49,13 @@ int bentool_main(int argc, char **argv)
                         return -1;
                     }
                     else
+                    {
                         if_name = argv[optind];
+                        return -1;
+                    }
                 }
+                else
+                    printf("No option\n");
                 break;
             case 's':
                 if(!optarg || optarg[1])
@@ -77,6 +82,17 @@ int bentool_main(int argc, char **argv)
                         if(start_arg!=optind)
                             opt_argc += optind -start_arg;
                         break;
+                    case 'H':
+                        flag[sH]=1;
+                        for(start_arg=optind ; optind<argc ;optind++)
+                            if(argv[optind][0] == 0 || argv[optind][0]=='-')
+                                break;
+                        if(start_arg!=optind)
+                            opt_argc += optind -start_arg;
+                        break;
+                    default:
+                        printf("No option\n");
+                        return -1;
                 }
                 break;
             case 'p':
@@ -98,6 +114,7 @@ int bentool_main(int argc, char **argv)
                         break;
                     default:
                         printf("No option\n");
+                        return -1;
                 }
                 break;
             case 'a':
@@ -117,6 +134,9 @@ int bentool_main(int argc, char **argv)
                         if(start_arg!=optind)
                             opt_argc += optind -start_arg;
                         break;
+                    default:
+                        printf("No option\n");
+                        return -1;
                 }
                 break;
             case '?':
@@ -187,7 +207,7 @@ int bentool_main(int argc, char **argv)
         }
 
     }
-    else if(flag[sT])
+    else if(flag[sH])
     {   
         switch(opt_argc)
         {

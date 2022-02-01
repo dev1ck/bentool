@@ -19,6 +19,8 @@ int make_socket()
 
 void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr)
 {
+    srand((unsigned int)time(NULL));
+    
     struct in_addr ranip;
     uint16_t ranport = rand();
     uint32_t ranseq = rand();
