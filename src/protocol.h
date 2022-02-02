@@ -161,7 +161,6 @@ __attribute__((__packed__));
 #endif
 struct tcp_packet
 {
-    struct etherhdr etherhdr;
     struct iphdr iphdr;
     struct tcphdr tcphdr;
 }
