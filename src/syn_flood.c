@@ -1,6 +1,6 @@
 #include "protocol.h"
 
-#define TH_N 1
+#define TH_N 12
 
 struct thread_arg
 {
