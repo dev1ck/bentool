@@ -10,6 +10,7 @@
 #include<stdlib.h>
 #include<sys/types.h>
 #include<errno.h>
+#include<pthread.h>
 
 #ifndef __linux__
     #include <winsock.h>
@@ -49,7 +50,7 @@ struct arp_hdr {
    uint8_t ar_pln;		// Length of protocol address 
    uint16_t ar_op;		// ARP opcode (command) 
    uint8_t ar_sha[6];	// Sender hardware address 
-   uint32_t ar_sip;		// Sender IP address why uint32_t? becouse sin_addr.s_addr is 4 byte 
+   uint32_t ar_sip;	// Sender IP address why uint32_t? becouse sin_addr.s_addr is 4 byte 
    uint8_t ar_tha[6];	// Target hardware address 
    uint32_t ar_tip;		// Target IP address 
 }
@@ -62,5 +63,4 @@ __attribute__ ((__packed__)); // 구조체 바이트 빈공간 제어 -> 빈공�
 
 struct eth_hdr ether;
 struct arp_hdr arp;
-struct ifreq ifr_hw,ifr_ip;
 
