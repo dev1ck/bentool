@@ -334,7 +334,8 @@ void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src
 
     packet->tcphdr.th_sum = 0;
     packet->tcphdr.th_sum = cksum((void *)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
-    printf("%d\n",packet->tcphdr.th_sum);
+
+
 }
 
 void make_tcp_header_v2(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag)

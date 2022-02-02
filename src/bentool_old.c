@@ -7,7 +7,7 @@
 #define i_flag 0x0004
 #define set_flag 0x0003
 
-int ping_scan(char *input_IP);
+//int ping_scan(char *input_IP);
 void help()
 {
     

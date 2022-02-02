@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     uint16_t start_port, end_port, port;
     struct param_data param;
     struct tcphdr packet;
-    if(argc<=4)
+    if(argc<4)
     {
         printf("Usage : %s [my ip] [target ip] [start port] [end port]\n", argv[ARGV_CMD]);
         return 1;
