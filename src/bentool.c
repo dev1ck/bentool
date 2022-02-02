@@ -236,10 +236,14 @@ int bentool_main(int argc, char **argv)
     }
     else if(flag[aS])
     {
+        opt_argc--;
         switch(opt_argc)
         {
-            case 3:
-                syn_flood(argv[start_arg], argv[start_arg+1]);
+            case 1:
+                syn_flood(opt_argc, argv[start_arg]);
+                break;
+            case 2:
+                syn_flood(opt_argc, argv[start_arg], argv[start_arg+1]);
                 break;
 
             default:

