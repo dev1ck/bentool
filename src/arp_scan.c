@@ -3,9 +3,10 @@
 #define ARP_REPLY 2
 #define TIME_SEC 1
 
-int stopflag =0;
+int stopflag=0;
 int oipflag=0;
 int revflag=0;
+int my_ip=0;
 
 struct save_addrs
 {
@@ -45,7 +46,6 @@ int arp_scan(int argc, ...)
     struct in_addr start_ip,end_ip;
     char p_sip[16], p_eip[16];
     char *argv[argc];
-    int my_ip;
     va_list ap;
     va_start(ap, argc);
     clock_t startt ,endt;
@@ -189,6 +189,8 @@ int arp_scan(int argc, ...)
     if(my_ip==1)
     {
         printf("\n%s is my IP\n",inet_ntoa(tip));
+        close(sock);
+        exit(1);
     }
     else if(oipflag==0)
     {
@@ -239,6 +241,10 @@ void *thread(void *t)
     
     do 
     { 
+        if(stopflag||my_ip)
+        {
+            break;
+        }
         if(read(sock, rep_buf, sizeof(rep_buf))<0)
         {
             continue;
@@ -292,7 +298,7 @@ void *timer()
     while(1)
     {
         if(revflag==0)
-        {
+        {   
             for(time=0;time<5;time++)
             {
                 sleep(1);
