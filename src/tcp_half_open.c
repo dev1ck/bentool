@@ -2,8 +2,6 @@
 
 void  strmac_to_buffer(const char *str, uint8_t *mac);
 
-enum {ARGV_CMD, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
-
 void *tcp_thread_function(void *p);
 
 struct param_data
@@ -13,7 +11,7 @@ struct param_data
     uint16_t end_port;
 };
 
-int main(int argc, char **argv)
+int half_open_scan(char* target_ip, char *s_port, char *e_port)
 {
     pthread_t thread_id;
     uint16_t start_port, end_port, port;
@@ -24,26 +22,20 @@ int main(int argc, char **argv)
     struct param_data param;
     struct tcphdr packet;
 
-    if(argc<4)
-    {
-        printf("Usage : %s [target ip] [start port] [end port]\n", argv[ARGV_CMD]);
-        return 1;
-    }
-
     if((param.sock = socket(PF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)
     {
         perror("socket ");
         return 1;
     }
 
-    param.start_port = start_port = (uint16_t)atoi(argv[ARGV_START_PORT]);
-    param.end_port = end_port = (uint16_t)atoi(argv[ARGV_END_PORT]);
+    param.start_port = start_port = (uint16_t)atoi(s_port);
+    param.end_port = end_port = (uint16_t)atoi(e_port);
 
     pthread_create(&thread_id, NULL, tcp_thread_function, &param);
 
     memset(&addr, 0x00, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr(argv[ARGV_TARGET_IP]);
+    addr.sin_addr.s_addr = inet_addr(target_ip);
 
     memset(&packet, 0, sizeof(packet));
 
