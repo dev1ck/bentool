@@ -107,8 +107,8 @@ void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr)
 
     ranip.s_addr = rand();
 
-    make_tcp_header_v2(&packet->tcphdr, ranip, port, addr->sin_addr, ntohs(addr->sin_port), 0, 0, TH_SYN);
-    make_ip_header_v2(&packet->iphdr, ranip, addr->sin_addr, sizeof(struct tcphdr));
+    make_tcp_header(&packet->tcphdr, ranip, port, addr->sin_addr, ntohs(addr->sin_port), 0, 0, TH_SYN);
+    make_ip_header(&packet->iphdr, ranip, addr->sin_addr, sizeof(struct tcphdr));
     port++;
 }
 

@@ -231,10 +231,10 @@ int relay(uint8_t *dst_mac, char * if_name);
 uint16_t cksum(void *data, uint32_t len);
 int get_info(struct nic_info *nic_info, char *if_name);
 int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP);
-void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
-void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
-void make_tcp_header_v2(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
-void make_ip_header_v2(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
+void make_tcp_header_old(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
+void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
+void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
+void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
 int syn_flood(int argc, ...);
-//int ping_scan(char *input_IP);
+
 #endif

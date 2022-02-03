@@ -315,30 +315,7 @@ uint16_t cksum(void *data, uint32_t len)
 	return (sum == 0xffff)?sum:~sum;
 }
 
-void make_tcp_header(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag)
-{
-    packet->tcphdr.th_seq = htonl(seq);
-    packet->tcphdr.th_ack = htonl(ack);
-    packet->tcphdr.th_sport = htons(src_port);
-    packet->tcphdr.th_dport = htons(dst_port);
-    packet->tcphdr.th_off = 5;
-    packet->tcphdr.th_flags = flag;
-    packet->tcphdr.th_win = htons(8192);
-    packet->tcphdr.th_urp = 0;
-
-    packet->iphdr.ip_ttl = 0;
-    packet->iphdr.ip_p = IPPROTO_TCP;
-    packet->iphdr.ip_src.s_addr = inet_addr(src_ip);
-    packet->iphdr.ip_dst.s_addr = inet_addr(dst_ip);
-    packet->iphdr.ip_sum = htons(sizeof(packet->tcphdr));
-
-    packet->tcphdr.th_sum = 0;
-    packet->tcphdr.th_sum = cksum((void *)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
-
-
-}
-
-void make_tcp_header_v2(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag)
+void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag)
 {
     struct tcp_cksum_hdr cksum_hdr;
     memset(&cksum_hdr, 0, sizeof(cksum_hdr));
@@ -362,7 +339,45 @@ void make_tcp_header_v2(struct tcphdr *packet, struct in_addr src_ip, uint16_t s
     packet->th_sum = cksum((void *)&cksum_hdr, sizeof(cksum_hdr));
 }
 
-void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen)
+void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen)
+{
+    iphdr->ip_v = 4;
+    iphdr->ip_hl = sizeof(struct iphdr) >> 2;
+    iphdr->ip_id = 100;
+    iphdr->ip_len = htons(sizeof(struct iphdr) + datalen);
+    iphdr->ip_off = htons(0);
+    iphdr->ip_ttl = 128;
+    iphdr->ip_p = IPPROTO_TCP;
+    iphdr->ip_src = src_ip;
+    iphdr->ip_dst = dst_ip;
+    iphdr->ip_sum = 0;
+    iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
+}
+
+void make_tcp_header_old(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag)
+{
+    packet->tcphdr.th_seq = htonl(seq);
+    packet->tcphdr.th_ack = htonl(ack);
+    packet->tcphdr.th_sport = htons(src_port);
+    packet->tcphdr.th_dport = htons(dst_port);
+    packet->tcphdr.th_off = 5;
+    packet->tcphdr.th_flags = flag;
+    packet->tcphdr.th_win = htons(8192);
+    packet->tcphdr.th_urp = 0;
+
+    packet->iphdr.ip_ttl = 0;
+    packet->iphdr.ip_p = IPPROTO_TCP;
+    packet->iphdr.ip_src.s_addr = inet_addr(src_ip);
+    packet->iphdr.ip_dst.s_addr = inet_addr(dst_ip);
+    packet->iphdr.ip_sum = htons(sizeof(packet->tcphdr));
+
+    packet->tcphdr.th_sum = 0;
+    packet->tcphdr.th_sum = cksum((void *)&(packet->iphdr.ip_ttl), PSEUDO_HEADER_LEN + sizeof(packet->tcphdr));
+
+
+}
+
+void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen)
 {
     iphdr->ip_v = 4;
     iphdr->ip_hl = sizeof(struct iphdr) >> 2;
@@ -377,17 +392,3 @@ void make_ip_header(struct iphdr *iphdr, const char *src_ip, const char *dst_ip,
     iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
 }
 
-void make_ip_header_v2(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen)
-{
-    iphdr->ip_v = 4;
-    iphdr->ip_hl = sizeof(struct iphdr) >> 2;
-    iphdr->ip_id = 100;
-    iphdr->ip_len = htons(sizeof(struct iphdr) + datalen);
-    iphdr->ip_off = htons(0);
-    iphdr->ip_ttl = 128;
-    iphdr->ip_p = IPPROTO_TCP;
-    iphdr->ip_src = src_ip;
-    iphdr->ip_dst = dst_ip;
-    iphdr->ip_sum = 0;
-    iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
-}
