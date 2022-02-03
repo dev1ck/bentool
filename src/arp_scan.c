@@ -4,6 +4,8 @@
 #define TIME_SEC 1
 
 int stopflag =0;
+int oipflag=0;
+int revflag=0;
 
 struct save_addrs
 {
@@ -11,12 +13,6 @@ struct save_addrs
     uint8_t hw_addr[6];  
 };
 
-struct thread_arg
-{
-    int sock;
-    struct in_addr target_ip;
-    struct in_addr host_ip;
-};
 struct arp_data
 {
     uint8_t target_mac[6];
@@ -24,6 +20,7 @@ struct arp_data
 };
 
 void *thread(void*t);
+void *timer();
 void arp_quick_sort(struct save_addrs *addr, int start, int end);
 int send_arp(int sock,uint8_t my_mac[6],struct in_addr sip,struct in_addr tip,struct sockaddr_ll sll);
 //int arp_scan(int argc, ...);
@@ -39,24 +36,25 @@ int send_arp(int sock,uint8_t my_mac[6],struct in_addr sip,struct in_addr tip,st
 int arp_scan(int argc, ...)
 {
     struct nic_info info;
-    int result;
     static int sock;
-    struct sockaddr_ll sll,re_sll;
-    struct sockaddr_in *sin;
-    struct thread_arg thread_arg;
-    pthread_t thread_id;
+    struct sockaddr_ll sll;
+    pthread_t thread_id ,timer_id;
     struct arp_data *arp_data;
     struct in_addr tip;
     uint32_t start_argv,end_argv,tmp_ip;
     struct in_addr start_ip,end_ip;
     char p_sip[16], p_eip[16];
-    int reply_len;
-    char *info_name;
+    char *argv[argc];
+    int my_ip;
     va_list ap;
     va_start(ap, argc);
     clock_t startt ,endt;
     float work_t;
-    info_name=va_arg(ap,char *);
+
+    for(int i=0;i<argc;i++)
+    {
+        argv[i]=va_arg(ap,char *);
+    }
 
     //struct sockaddr recv_ip;
     printf("\n\n===== Starting ARP_Scan.. =====\n");
@@ -70,21 +68,23 @@ int arp_scan(int argc, ...)
         return -1;
     }
 
-    if(get_info(&info,info_name)<0)
+    if(get_info(&info,argv[0])<0)
     {
         printf("\n\n=====!! Failed Loading Interface!!=====\n\n");
         close(sock);
         return -1;
     }
-        
+    
     printf("\n\ns ip : %s",inet_ntoa(info.in_addr));
 
     memset(&sll, 0, sizeof(sll));
     sll.sll_ifindex=info.ifindex;
     sll.sll_halen   = ETH_ALEN;
     memset(sll.sll_addr,0xff,6);
-   
+    
     pthread_create(&thread_id,NULL,thread,&sock);
+    pthread_create(&timer_id,NULL,timer,NULL);
+    usleep(5);
 
     if(argc==1)
     {
@@ -102,8 +102,8 @@ int arp_scan(int argc, ...)
         strcpy(p_sip,inet_ntoa(start_ip));
         strcpy(p_eip,inet_ntoa(end_ip));
         
-        printf("\n\nSend to ARP Packet : all range %s -> %s \n", p_sip,p_eip);
-
+        printf("\n\nSend to ARP Packet : all range / %s ~ %s \n", p_sip,p_eip);
+        revflag=1;
         for(tmp_ip = start_argv; tmp_ip<=end_argv; tmp_ip++)
         {
             tip.s_addr = htonl(tmp_ip);
@@ -113,15 +113,23 @@ int arp_scan(int argc, ...)
     }
     else if(argc==2)
     {   
-        inet_aton(va_arg(ap,char *),&tip);
+        
+        inet_aton(argv[1],&tip);
+        if(tip.s_addr==info.in_addr.s_addr)
+        {
+            stopflag=1;
+            my_ip=1;
+        }
+        printf("\n\nSend To ARP Packet : %s\n",argv[1]);
         va_end(ap);
         send_arp(sock,info.my_mac,info.in_addr,tip,sll);
+        oipflag=1;
 
     }
     else if(argc==3)
     {
-        start_argv=ntohl(inet_addr(va_arg(ap,char *)));
-        end_argv=ntohl(inet_addr(va_arg(ap,char *)));
+        start_argv=ntohl(inet_addr(argv[1]));
+        end_argv=ntohl(inet_addr(argv[2]));
         
         if(start_argv==-1||end_argv==-1)
         {
@@ -137,10 +145,17 @@ int arp_scan(int argc, ...)
         }
         if(start_argv==end_argv)
         {
-            inet_aton(va_arg(ap,char *),&tip);
-            printf("\n\nSend To ARP Packet : %s\n",va_arg(ap,char *));
+            inet_aton(argv[1],&tip);
+            if(tip.s_addr==info.in_addr.s_addr)
+            {
+                stopflag=1;
+                my_ip=1;
+            }
+            printf("\n\nSend To ARP Packet : %s\n",argv[1]);
             va_end(ap);
             send_arp(sock,info.my_mac,info.in_addr,tip,sll);
+            oipflag=1;
+
         }
         else
         {
@@ -150,8 +165,8 @@ int arp_scan(int argc, ...)
             strcpy(p_sip,inet_ntoa(start_ip));
             strcpy(p_eip,inet_ntoa(end_ip));
             
-            printf("\n\nSend To ARP Packet : %s -> %s \n", p_sip,p_eip);
-
+            printf("\n\nSend To ARP Packet : %s ~ %s \n", p_sip,p_eip);
+            revflag=1;
             for(tmp_ip = start_argv; tmp_ip<=end_argv; tmp_ip++)
             {
                 tip.s_addr = htonl(tmp_ip);
@@ -170,16 +185,21 @@ int arp_scan(int argc, ...)
         return -1;
     }
 
-    sleep(0.1);
     printf("\n\n===== Live IP =====\n\n");  
-    sleep(3);
-    stopflag=1;
+    if(my_ip==1)
+    {
+        printf("\n%s is my IP\n",inet_ntoa(tip));
+    }
+    else if(oipflag==0)
+    {
+        sleep(3);
+        stopflag=1;
+    }
 
     pthread_join(thread_id, (void **)&arp_data);
-
     endt=time(NULL);
     
-    printf("\n\nworking time : %.2f",(double)(endt-startt));
+    printf("\n\nworking time : %.1f\n",(double)(endt-startt));
     close(sock);
 
     
@@ -229,16 +249,21 @@ void *thread(void *t)
         {
             if(arphdr->ar_op == htons(0x0002))
             {
+                revflag=1;
                     
                 //printf("arphdr : %02x\n",arphdr->ar_sip); // ??
                 s_addr[index].ip_addr=ntohl(arphdr->ar_sip);
                 memcpy(&s_addr[index].hw_addr, &arphdr->ar_sha, 6);
                 index++;
-
+               
                 if((s_addr = (struct save_addrs *)realloc(s_addr, sizeof(struct save_addrs)*(index+1))) == NULL)
                 {
                     printf("Memory full error\n");
                     break;
+                }
+                if(oipflag==1)
+                {
+                    stopflag=1;
                 }
             }
         }
@@ -261,7 +286,27 @@ void *thread(void *t)
 
 
 }
+void *timer()
+{
+    int time;
+    while(1)
+    {
+        if(revflag==0)
+        {
+            for(time=0;time<5;time++)
+            {
+                sleep(1);
+            }
+            stopflag=1;
+            break;
+        }
+        else
+        {
+            break;
+        }
+    }
 
+}
 void arp_quick_sort(struct save_addrs *addr, int start, int end)
 {
     if(start >= end) return;
