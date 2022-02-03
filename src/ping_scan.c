@@ -57,79 +57,81 @@ int ping_scan(int argc, ...)
 
     pthread_create(&thread_id, NULL, thread_function, &sock);
 
-    if(argc == 3)
+    switch(argc)
     {
-        start_ip = ntohl(inet_addr(va_arg(ap,char *)));
-        end_ip = ntohl(inet_addr(va_arg(ap,char *)));
-        va_end(ap);
-
-        if(start_ip == -1 || end_ip == -1)
-        {
-            printf("IP Address error\n");
-            return -1;
-        }
-        else if(start_ip>end_ip)
-        {
-            ip = start_ip;
-            start_ip = end_ip;
-            end_ip = ip;
-        }
-        else if(start_ip == end_ip)
-        {
-            ip = start_ip;
-            start_ip = 0;
-        }
-    }
-    else if(argc == 2)
-    {
-        input_data = va_arg(ap,char *);
-        if(!(ptr=strchr(input_data,'/')))
-        {
-            ip = ntohl(inet_addr(input_data));
-            if(ip == -1)
+        case 1:
+            if(get_info(&info, if_name)<0)
             {
-                printf("IP Address error\n");
+                printf("Interface name error, input -if <interface_name> or don't use -if option\n");
                 return -1;
             }
-        }
-        else
-        {
-            strtok(input_data,"/");
-
-            ip = ntohl(inet_addr(input_data));
-            if(ip == -1)
-            {
-                printf("IP Address error\n");
-                return -1;
-            }
-
-            prefix =  atoi(ptr+1);
-            if(prefix>32 || prefix < 0)
-            {
-                printf("Prefix error\n");
-                return -1;
-            }
-            mask = (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
+            
+            mask = ntohl(info.maskaddr.s_addr);
+            ip = ntohl(info.in_addr.s_addr);
 
             start_ip = (ip&mask)+1;
             end_ip = (ip|~mask)-1;
-        }
-        va_end(ap);
-    }
-    else if(argc == 1)
-    {
-        if(get_info(&info, if_name)<0)
-        {
-            printf("Interface name error, input -if <interface_name> or don't use -if option\n");
-            return -1;
-        }
-        
-        mask = ntohl(info.maskaddr.s_addr);
-        ip = ntohl(info.in_addr.s_addr);
+            va_end(ap);
+            break;
+            
+        case 2:
+            input_data = va_arg(ap,char *);
+            if(!(ptr=strchr(input_data,'/')))
+            {
+                ip = ntohl(inet_addr(input_data));
+                if(ip == -1)
+                {
+                    printf("IP Address error\n");
+                    return -1;
+                }
+            }
+            else
+            {
+                strtok(input_data,"/");
 
-        start_ip = (ip&mask)+1;
-        end_ip = (ip|~mask)-1;
-        va_end(ap);
+                ip = ntohl(inet_addr(input_data));
+                if(ip == -1)
+                {
+                    printf("IP Address error\n");
+                    return -1;
+                }
+
+                prefix =  atoi(ptr+1);
+                if(prefix>32 || prefix < 0)
+                {
+                    printf("Prefix error\n");
+                    return -1;
+                }
+                mask = (0xFFFFFFFF << (32 - prefix)) & 0xFFFFFFFF;
+
+                start_ip = (ip&mask)+1;
+                end_ip = (ip|~mask)-1;
+            }
+            va_end(ap);
+            break;
+
+        case 3:
+            start_ip = ntohl(inet_addr(va_arg(ap,char *)));
+            end_ip = ntohl(inet_addr(va_arg(ap,char *)));
+            va_end(ap);
+
+            if(start_ip == -1 || end_ip == -1)
+            {
+                printf("IP Address error\n");
+                return -1;
+            }
+            else if(start_ip>end_ip)
+            {
+                ip = start_ip;
+                start_ip = end_ip;
+                end_ip = ip;
+            }
+            else if(start_ip == end_ip)
+            {
+                ip = start_ip;
+                start_ip = 0;
+            }
+            break;
     }
     
     if(!start_ip)
