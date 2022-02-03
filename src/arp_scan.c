@@ -1,5 +1,5 @@
 //#include "arp_scan.h"
-#include "../../src/protocol.h"
+#include "protocol.h"
 #define ARP_REPLY 2
 #define TIME_SEC 1
 

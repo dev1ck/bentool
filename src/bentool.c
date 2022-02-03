@@ -177,13 +177,13 @@ int bentool_main(int argc, char **argv)
         switch(opt_argc)
         {
             case 1:
-                printf("opt_argc, if_name\n");
+                arp_scan(opt_argc, if_name);
                 break;
             case 2:
-                printf("opt_argc, if_name,argv[start_arg])\n");
+                arp_scan(opt_argc, if_name,argv[start_arg]);
                 break;
             case 3:
-                printf("opt_argc, if_name,if_name,argv[start_arg], argv[start_arg+1])\n");
+                arp_scan(opt_argc, if_name,argv[start_arg], argv[start_arg+1]);
                 break;
             default:
                 printf("Too many arguments\n");
