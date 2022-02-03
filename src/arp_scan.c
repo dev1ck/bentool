@@ -1,5 +1,5 @@
 //#include "arp_scan.h"
-#include "protocol.h"
+#include "../../src/protocol.h"
 #define ARP_REPLY 2
 #define TIME_SEC 1
 
@@ -31,10 +31,11 @@ int send_arp(int sock,uint8_t my_mac[6],struct in_addr sip,struct in_addr tip,st
 /*int main(int argc,char **argv)
 {
 
-    arp_scan(2,argv[1],argv[2]);
+    arp_scan(1,argv[1]);
 
     return 0;
-}*/
+}
+*/
 int arp_scan(int argc, ...)
 {
     struct nic_info info;
@@ -87,7 +88,28 @@ int arp_scan(int argc, ...)
 
     if(argc==1)
     {
+        va_end(ap);
+
+        start_argv=htonl(info.maskaddr.s_addr);
+        end_argv=htonl(info.in_addr.s_addr);
+
+        tmp_ip=(start_argv&end_argv)+1;
+        end_argv=(~start_argv|end_argv)-1;
+        start_argv=tmp_ip;
+
+        start_ip.s_addr= ntohl(start_argv);
+        end_ip.s_addr= ntohl(end_argv);
+        strcpy(p_sip,inet_ntoa(start_ip));
+        strcpy(p_eip,inet_ntoa(end_ip));
         
+        printf("\n\nSend to ARP Packet : all range %s -> %s \n", p_sip,p_eip);
+
+        for(tmp_ip = start_argv; tmp_ip<=end_argv; tmp_ip++)
+        {
+            tip.s_addr = htonl(tmp_ip);
+            send_arp(sock,info.my_mac,info.in_addr,tip,sll);
+            usleep(1);
+        }
     }
     else if(argc==2)
     {   
