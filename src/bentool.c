@@ -209,13 +209,11 @@ int bentool_main(int argc, char **argv)
     }
     else if(flag[sH])
     {   
+        opt_argc--;
         switch(opt_argc)
         {
-            case 2:
-                printf("tcp_scan(opt_argc, if_name,argv[start_arg])\n");
-                break;
             case 3:
-                printf("tcp_scan(opt_argc, if_name,argv[start_arg], argv[start_arg+1])\n");
+                half_open_scan(argv[start_arg],argv[start_arg+1],argv[start_arg+2]);
                 break;
             default:
                 printf("Incorrect use\n");
