@@ -236,5 +236,6 @@ void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst
 void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
 void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
 int syn_flood(int argc, ...);
+int arp_scan(int argc, ...);
 
 #endif

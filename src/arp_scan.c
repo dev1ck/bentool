@@ -24,7 +24,7 @@ struct arp_data
 };
 
 void *thread(void*t);
-void quick_sort(struct save_addrs *addr, int start, int end);
+void arp_quick_sort(struct save_addrs *addr, int start, int end);
 int send_arp(int sock,uint8_t my_mac[6],struct in_addr sip,struct in_addr tip,struct sockaddr_ll sll);
 //int arp_scan(int argc, ...);
 
@@ -246,7 +246,7 @@ void *thread(void *t)
     }while(!stopflag);
 
     s_addr = (struct save_addrs *)realloc(s_addr, sizeof(struct save_addrs)*(index));
-    quick_sort(s_addr, 0, index-1);
+    arp_quick_sort(s_addr, 0, index-1);
 
     for(int i=0; i<index ; i++)
     {
@@ -262,7 +262,7 @@ void *thread(void *t)
 
 }
 
-void quick_sort(struct save_addrs *addr, int start, int end)
+void arp_quick_sort(struct save_addrs *addr, int start, int end)
 {
     if(start >= end) return;
 
@@ -289,8 +289,8 @@ void quick_sort(struct save_addrs *addr, int start, int end)
             addr[j] = temp; 
         } 
     }
-    quick_sort(addr, start, j - 1);
-    quick_sort(addr, j + 1, end);
+    arp_quick_sort(addr, start, j - 1);
+    arp_quick_sort(addr, j + 1, end);
 }
 
 
