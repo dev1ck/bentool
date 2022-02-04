@@ -45,14 +45,11 @@ int bentool_main(int argc, char **argv)
                     }
                     else if((if_c - optind) > 1)
                     {
-                        printf("Too many interface name option\n");
+                        printf("Too many arguments\n");
                         return -1;
                     }
                     else
-                    {
                         if_name = argv[optind];
-                        return -1;
-                    }
                 }
                 else
                     printf("No option\n");
