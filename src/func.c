@@ -392,3 +392,11 @@ void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst
     iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
 }
 
+int hostname_to_ip(char * hostname , struct in_addr *ip)
+{
+    struct hostent *he;
+    if((he=gethostbyname(hostname))==NULL)
+        return -1;
+    memcpy(ip, he->h_addr_list[0], 4);
+    return 0;
+}

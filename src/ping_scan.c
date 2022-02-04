@@ -78,7 +78,13 @@ int ping_scan(int argc, ...)
             input_data = va_arg(ap,char *);
             if(!(ptr=strchr(input_data,'/')))
             {
-                ip = ntohl(inet_addr(input_data));
+                struct in_addr temp_ip;
+                if(hostname_to_ip(input_data, &temp_ip)<0)
+                {
+                    printf("%s host not found, check hostname\n",input_data);
+                    return -1;
+                }
+                ip = ntohl(temp_ip.s_addr);
                 if(ip == -1)
                 {
                     printf("IP Address error\n");
@@ -136,9 +142,8 @@ int ping_scan(int argc, ...)
     
     if(!start_ip)
     {  
-        printf("Send to ICMP Packet : %s\n\n",input_data);
         addr.sin_addr.s_addr = htonl(ip);
-       
+        printf("Send to ICMP Packet : %s\n\n",inet_ntoa(addr.sin_addr));
         if(sendto(sock, &icmp_p, sizeof(icmp_p), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             perror("sendto");

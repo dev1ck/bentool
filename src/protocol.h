@@ -237,5 +237,6 @@ void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_
 void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
 int syn_flood(int argc, ...);
 int arp_scan(int argc, ...);
+int hostname_to_ip(char * hostname , struct in_addr *ip);
 
 #endif

