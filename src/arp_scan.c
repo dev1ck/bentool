@@ -67,7 +67,7 @@ int arp_scan(int argc, ...)
         printf("sock() error! ");
         return -1;
     }
-
+    
     if(get_info(&info,argv[0])<0)
     {
         printf("\n\n=====!! Failed Loading Interface!!=====\n\n");
@@ -75,7 +75,7 @@ int arp_scan(int argc, ...)
         return -1;
     }
     
-    printf("\n\ns ip : %s",inet_ntoa(info.in_addr));
+    printf("\n\nmy ip : %s",inet_ntoa(info.in_addr));
 
     memset(&sll, 0, sizeof(sll));
     sll.sll_ifindex=info.ifindex;
@@ -133,7 +133,7 @@ int arp_scan(int argc, ...)
         
         if(start_argv==-1||end_argv==-1)
         {
-            printf("IP Address error\n");
+            printf("\nIP Address error\n");
             return -1;
         }
 
@@ -181,7 +181,7 @@ int arp_scan(int argc, ...)
     else
     {
         va_end(ap);
-        printf("target ip error!");
+        printf("\ntarget ip error!\n");
         return -1;
     }
 
@@ -241,10 +241,6 @@ void *thread(void *t)
     
     do 
     { 
-        if(stopflag||my_ip)
-        {
-            break;
-        }
         if(read(sock, rep_buf, sizeof(rep_buf))<0)
         {
             continue;
@@ -269,6 +265,7 @@ void *thread(void *t)
                 }
                 if(oipflag==1)
                 {
+                    
                     stopflag=1;
                 }
             }
@@ -299,12 +296,18 @@ void *timer()
     {
         if(revflag==0)
         {   
-            for(time=0;time<5;time++)
+            for(time=0;time<10;time++)
             {
                 sleep(1);
             }
-            stopflag=1;
-            break;
+            if(revflag==0)
+            {
+                stopflag=1;
+            }
+            else
+            {
+                break;
+            }
         }
         else
         {
