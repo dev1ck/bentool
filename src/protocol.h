@@ -222,7 +222,7 @@ __attribute__((__packed__));
 int bentool_main(int argc, char **argv);
 void usage(void);
 int ping_scan(int args, ...);
-int half_open_scan(char* target_ip, char *s_port, char *e_port);
+int half_open_scan(int args, ...);
 uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);
 int tcp_half_scan(int argc, char **argv);
