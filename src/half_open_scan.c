@@ -104,8 +104,7 @@ int half_open_scan(int args, ...)
                         //printf("==============================\n");
                         //printf("target IP : %s : %d\n", inet_ntoa(addr.sin_addr), port);
                         //printf("==============================\n");
-                        memset(&packet, 0, sizeof(packet));
-                        make_tcp_header_v2(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
+                        make_tcp_header(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
 
                         if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
                         {
@@ -129,7 +128,7 @@ int half_open_scan(int args, ...)
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
                 for(port = start_port; port <= end_port; port++)
                 {
-                    make_tcp_header_v2(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
+                    make_tcp_header(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
 
                     if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
                     {
@@ -151,7 +150,7 @@ int half_open_scan(int args, ...)
 
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
 
-                make_tcp_header_v2(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
+                make_tcp_header(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
 
                 if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
                 {
@@ -172,7 +171,7 @@ int half_open_scan(int args, ...)
                 
                 for(port = start_port; port <= end_port; port++)
                 {
-                    make_tcp_header_v2(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
+                    make_tcp_header(&packet, nic_info.in_addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
 
                     if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
                     {

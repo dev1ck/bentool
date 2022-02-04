@@ -209,8 +209,17 @@ int bentool_main(int argc, char **argv)
         opt_argc--;
         switch(opt_argc)
         {
+            case 1:
+                half_open_scan(opt_argc, if_name);
+                break;
+            case 2:
+                half_open_scan(opt_argc, if_name, argv[start_arg]);
+                break;
             case 3:
-                half_open_scan(argv[start_arg],argv[start_arg+1],argv[start_arg+2]);
+                half_open_scan(opt_argc, if_name, argv[start_arg], argv[start_arg+1]);
+                break;
+            case 4:
+                half_open_scan(opt_argc, if_name, argv[start_arg], argv[start_arg+1], argv[start_arg+2]);
                 break;
             default:
                 printf("Incorrect use\n");
