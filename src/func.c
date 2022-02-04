@@ -323,7 +323,7 @@ void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_
     cksum_hdr.pseudohdr.ip_src = src_ip;
     cksum_hdr.pseudohdr.ip_dst = dst_ip;
     cksum_hdr.pseudohdr.protocol_type = IPPROTO_TCP;
-    cksum_hdr.pseudohdr.tcp_total_lenght = htons(sizeof(struct tcphdr));
+    cksum_hdr.pseudohdr.tcp_total_length = htons(sizeof(struct tcphdr));
 
     packet->th_sport = htons(src_port);
     packet->th_dport = htons(dst_port);

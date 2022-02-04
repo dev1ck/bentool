@@ -147,7 +147,7 @@ struct pseudohdr
     struct in_addr ip_src, ip_dst;
     uint8_t reserved;
     uint8_t protocol_type;
-    uint16_t tcp_total_lenght;
+    uint16_t tcp_total_length;
 }
 #ifndef __linux
     ;
