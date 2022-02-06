@@ -24,6 +24,7 @@ int bentool_main(int argc, char **argv)
                 if(!optarg)
                 {   
                     flag[opt_i]=1;
+                    start_arg
                     for(start_arg=optind ; optind<argc ;optind++)
                         if(argv[optind][0] == 0 || argv[optind][0]=='-')
                             break;
@@ -31,7 +32,7 @@ int bentool_main(int argc, char **argv)
                         opt_argc += optind -start_arg;
                     break;
                 }
-                // optarg[0]의 값이 f일 때 - if
+                // optarg[0]의 값이 f일 때 / -if 옵션 사용
                 // if_name의 변수 값 변경하기 위함
                 else if(optarg[0]=='f')
                 {
