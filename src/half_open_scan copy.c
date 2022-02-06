@@ -1,6 +1,6 @@
 #include "protocol.h"
 #define TCP_PORT_MIN_SIZE 0
-#define TCP_PORT_MAX_SIZE 65535
+#define TCP_PORT_MAX_SIZE 1023
 
 void  strmac_to_buffer(const char *str, uint8_t *mac);
 
@@ -134,14 +134,13 @@ int half_open_scan(int args, ...)
             {
                 param.start_port = start_port = TCP_PORT_MIN_SIZE;
                 param.end_port = end_port = TCP_PORT_MAX_SIZE;
-
                 
-                
-                //target_ip = va_arg(ap, char*);
+                // target_ip = va_arg(ap, char*);
                 inet_aton(va_arg(ap, char*), (struct in_addr*)&addr.sin_addr);
-                va_end(ap);  
-                param.src_ip.s_addr = htonl(addr.sin_addr.s_addr);
-                param.dst_ip.s_addr = htonl(addr.sin_addr.s_addr);
+                va_end(ap); 
+                printf("%s\n",inet_ntoa(addr.sin_addr));
+                param.src_ip.s_addr = addr.sin_addr.s_addr;
+                param.dst_ip.s_addr = addr.sin_addr.s_addr;
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
                 for(port = start_port; port <= end_port; port++)
                 {
@@ -230,9 +229,8 @@ void *tcp_thread_function(void *p)
         if(iphdr->ip_p != IPPROTO_TCP) continue;
 
         struct tcphdr *tcphdr = (struct tcphdr *)(buffer + (iphdr->ip_hl << 2));
-        if((ntohl(iphdr->ip_src.s_addr) >= param_ptr->src_ip.s_addr) && (ntohl(iphdr->ip_src.s_addr) <= param_ptr->dst_ip.s_addr))
+        if((ntohl(iphdr->ip_src.s_addr) >= ntohl(param_ptr->src_ip.s_addr)) && (ntohl(iphdr->ip_src.s_addr) <= ntohl(param_ptr->dst_ip.s_addr)))
         {
-            //printf("%s\n",);
             if((ntohs(tcphdr->th_sport) >= param_ptr->start_port) && (ntohs(tcphdr->th_sport) <= param_ptr->end_port))
             {
                 if(((tcphdr->th_flags & TH_SYN) == TH_SYN) && ((tcphdr->th_flags & TH_ACK) == TH_ACK))

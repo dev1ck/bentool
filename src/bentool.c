@@ -1,7 +1,9 @@
 #include "protocol.h"
 
 #define optN 6
-enum {i, sA, sP, sH, pA, aS};
+enum {opt_i, opt_sA, opt_sP, opt_sH, opt_pA, opt_aS};
+
+int 
 
 int bentool_main(int argc, char **argv)
 {
@@ -16,10 +18,12 @@ int bentool_main(int argc, char **argv)
     {
         switch(c)
         {
+            // i 옵션 check on/off
             case 'i':
+                // optarg의 값이 없을 때 / -i 옵션 사용
                 if(!optarg)
                 {   
-                    flag[i]=1;
+                    flag[opt_i]=1;
                     for(start_arg=optind ; optind<argc ;optind++)
                         if(argv[optind][0] == 0 || argv[optind][0]=='-')
                             break;
@@ -27,22 +31,29 @@ int bentool_main(int argc, char **argv)
                         opt_argc += optind -start_arg;
                     break;
                 }
+                // optarg[0]의 값이 f일 때 - if
+                // if_name의 변수 값 변경하기 위함
                 else if(optarg[0]=='f')
                 {
+                    // optarg 인자 2개 이상일 때 에러처리 - Ex)ifc
                     if(optarg[1])
                     {
                         printf("Option error\n");
                         return -1;
                     }
                     int if_c;
+                    // if옵션 인자 개수 확인
                     for(if_c=optind ; if_c<argc ;if_c++)
                         if(argv[if_c][0] == 0 || argv[if_c][0]=='-')
                             break;
+                    // if 인자 개수 0개일 때 에러처리
                     if(if_c == optind)
                     {
                        printf("input interface name\n");
                        return -1;
                     }
+                    // if 인자 ./bentool -if opt1 opt2   argc = 4 optind = 2 if_c = 5
+                    // if 인자 개수 2개 이상일 때 에러처리
                     else if((if_c - optind) > 1)
                     {
                         printf("Too many arguments\n");
@@ -54,7 +65,9 @@ int bentool_main(int argc, char **argv)
                 else
                     printf("No option\n");
                 break;
+            // s 옵션 check on/off
             case 's':
+                // optarg 의 값이 없거나, 옵션이 2개일 경우 애러처리 
                 if(!optarg || optarg[1])
                 {   
                     printf("Option error\n");
@@ -63,24 +76,27 @@ int bentool_main(int argc, char **argv)
                 char s = optarg[0];
                 switch(s)
                 {
+                    // 옵션이 sA 일 경우
                     case 'A':
-                        flag[sA]=1;
+                        flag[opt_sA]=1; // flag[sA] 플래그 on
                         for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
                         if(start_arg!=optind)
                             opt_argc += optind -start_arg;
                         break;
+                    // 옵션이 sP 일 경우
                     case 'P':
-                        flag[sP]=1;
+                        flag[opt_sP]=1; // flag[sP] 플래그 on
                         for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
                         if(start_arg!=optind)
                             opt_argc += optind -start_arg;
                         break;
+                    // 옵션이 sH 일 경우
                     case 'H':
-                        flag[sH]=1;
+                        flag[opt_sH]=1; // flag[sH] 플래그 on
                         for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
@@ -92,7 +108,9 @@ int bentool_main(int argc, char **argv)
                         return -1;
                 }
                 break;
+            // p 옵션 check on/off
             case 'p':
+                // optarg 의 값이 없거나, 옵션이 2개일 경우 애러처리 
                 if(!optarg || optarg[1])
                 {   
                     printf("Option error\n");
@@ -101,8 +119,9 @@ int bentool_main(int argc, char **argv)
                 char p = optarg[0];
                 switch(p)
                 {
+                    // 옵션이 pA 일 경우
                     case 'A':
-                        flag[pA]=1;
+                        flag[opt_pA]=1; // flag[pA] 플래그 on
                         for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
@@ -114,7 +133,9 @@ int bentool_main(int argc, char **argv)
                         return -1;
                 }
                 break;
+            // a 옵션 check on/off
             case 'a':
+                // optarg 의 값이 없거나, 옵션이 2개일 경우 애러처리 
                 if(!optarg || optarg[1])
                 {   
                     printf("Option error\n");
@@ -123,8 +144,9 @@ int bentool_main(int argc, char **argv)
                 char a = optarg[0];
                 switch(a)
                 {
+                    // 옵션이 aS 일 경우
                     case 'S':
-                        flag[aS]=1;
+                        flag[opt_aS]=1; // flag[aS] 플래그 on
                         for(start_arg=optind ; optind<argc ;optind++)
                             if(argv[optind][0] == 0 || argv[optind][0]=='-')
                                 break;
@@ -136,6 +158,8 @@ int bentool_main(int argc, char **argv)
                         return -1;
                 }
                 break;
+
+            // error
             case '?':
                 return -1;
         }
@@ -155,7 +179,7 @@ int bentool_main(int argc, char **argv)
         return -1;
     }
 
-    if(flag[i])
+    if(flag[opt_i])
     {
         switch(opt_argc)
         {
@@ -169,8 +193,8 @@ int bentool_main(int argc, char **argv)
                 printf("Too many arguments\n");
         }
     }
-    else if(flag[sA])
-    {
+    else if(flag[opt_sA])
+    {   
         switch(opt_argc)
         {
             case 1:
@@ -186,7 +210,7 @@ int bentool_main(int argc, char **argv)
                 printf("Too many arguments\n");
         }
     }
-    else if(flag[sP])
+    else if(flag[opt_sP])
     {
         switch(opt_argc)
         {
@@ -204,7 +228,7 @@ int bentool_main(int argc, char **argv)
         }
 
     }
-    else if(flag[sH])
+    else if(flag[opt_sH])
     {   
         switch(opt_argc)
         {
@@ -223,9 +247,8 @@ int bentool_main(int argc, char **argv)
             default:
                 printf("Incorrect use\n");
         }
-
     }
-    else if(flag[pA])
+    else if(flag[opt_pA])
     { 
         switch(opt_argc)
         {
@@ -237,7 +260,7 @@ int bentool_main(int argc, char **argv)
                 printf("Incorrect use\n");
         }
     }
-    else if(flag[aS])
+    else if(flag[opt_aS])
     {
         opt_argc--;
         switch(opt_argc)
