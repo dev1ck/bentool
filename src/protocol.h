@@ -24,7 +24,7 @@
 #include <net/if.h>
 #include <net/ethernet.h>
 
-#include "pcap.h"
+#include <pcap.h>
 
 #define PACKMAX 4096
 #define ETHMAX 1514
@@ -238,5 +238,6 @@ void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr d
 int syn_flood(int argc, ...);
 int arp_scan(int argc, ...);
 int hostname_to_ip(char * hostname , struct in_addr *ip);
+int half_open_scan_old(int argc, char **argv);
 
 #endif

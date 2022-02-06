@@ -5,7 +5,7 @@
 void  strmac_to_buffer(const char *str, uint8_t *mac);
 
 //enum {ARGV_CMD, ARGV_GARBAGE_1, ARGV_GARBAGE_2, ARGV_GARBAGE_3, ARGV_GARBAGE_4, ARGV_MY_IP, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
-enum {ARGV_CMD, ARGV_MY_IP, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
+enum {ARGV_CMD, ARGV_TARGET_IP, ARGV_START_PORT, ARGV_END_PORT};
 
 void *tcp_thread_function(void *p);
 
@@ -16,8 +16,8 @@ struct param_data
     uint16_t end_port;
 };
 
-int main(int argc, char **argv)
-//int tcp_half_scan(int argc, char **argv)
+//int main(int argc, char **argv)
+int half_open_scan_old(int argc, char **argv)
 {
     pthread_t thread_id;
     int on = 1;
@@ -25,6 +25,7 @@ int main(int argc, char **argv)
     uint16_t start_port, end_port, port;
     struct param_data param;
     struct tcp_packet packet;
+    struct nic_info nic_info;
 
     if(argc<4)
     {
@@ -43,6 +44,13 @@ int main(int argc, char **argv)
         perror("setsockopt ");
         return 1;
     }
+
+    if(get_info(&nic_info, if_name)<0)
+    {
+        printf("Interface name error, input -if <interface_name> or don't use -if option\n");
+        return -1;
+    }
+    
     param.start_port = start_port = (uint16_t)atoi(argv[ARGV_START_PORT]);
     param.end_port = end_port = (uint16_t)atoi(argv[ARGV_END_PORT]);
 
@@ -58,9 +66,8 @@ int main(int argc, char **argv)
 
     for(port = start_port; port <= end_port; port += 1)
     {
-        
-        make_tcp_header_old(&packet, argv[ARGV_MY_IP], rand(), argv[ARGV_TARGET_IP], port, rand(), 0, TH_SYN);
-        make_ip_header_old(&(packet.iphdr), argv[ARGV_MY_IP], argv[ARGV_TARGET_IP], sizeof(struct tcphdr));
+        make_tcp_header_old(&packet, nic_info.in_addr, rand(), argv[ARGV_TARGET_IP], port, rand(), 0, TH_SYN);
+        make_ip_header_old(&(packet.iphdr), nic_info.in_addr, argv[ARGV_TARGET_IP], sizeof(struct tcphdr));
         if(sendto(param.sock, &(packet.iphdr), sizeof(struct iphdr) + sizeof(struct tcphdr), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
         {
             perror("sendto ");

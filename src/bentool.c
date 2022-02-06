@@ -206,7 +206,6 @@ int bentool_main(int argc, char **argv)
     }
     else if(flag[sH])
     {   
-        opt_argc--;
         switch(opt_argc)
         {
             case 1:
