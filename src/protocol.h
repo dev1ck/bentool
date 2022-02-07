@@ -26,17 +26,22 @@
 
 #include <pcap.h>
 
-#define PACKMAX 4096
-#define ETHMAX 1514
-#define ARPMAX 42
-#define IF_NAME "eth0"
+#define PACKET_MAX_LEN 4096
+#define ETH_MAX_LEN 1514
+#define ARP_MAX_LEN 42
 #define ETHERTYPE_IP 0x0800
 #define PSEUDO_HEADER_LEN 12
+#define I 0x0001
+#define sA 0x0002
+#define sP 0x0004
+#define sH 0x0008
+#define pA 0x0010
+#define aS 0x0020
 
 struct nic_info
 {
     uint8_t my_mac[6];
-    struct in_addr in_addr;
+    struct in_addr addr;
     struct in_addr broadaddr;
     struct in_addr maskaddr;
     int ifindex;
@@ -98,7 +103,7 @@ struct iphdr
 	uint8_t ip_ttl;			/* time to live */
 	uint8_t ip_p;			/* protocol */
 	uint16_t ip_sum;			/* checksum */
-	struct in_addr ip_src, ip_dst;	/* source and dest address */
+	struct in_addr src_ip, dst_ip;	/* source and dest address */
 }
 #ifndef __linux
     ;
@@ -107,8 +112,6 @@ struct iphdr
 __attribute__((__packed__));
 #endif
 
-typedef uint32_t tcp_seq;
-
 #ifndef __linux__
     #pragma pack(push, 1);
 #endif
@@ -116,8 +119,8 @@ struct tcphdr
 {
 	uint16_t th_sport;
     uint16_t th_dport;
-    tcp_seq th_seq;
-    tcp_seq th_ack;
+    uint32_t th_seq;
+    uint32_t th_ack;
     uint8_t th_x2:4;
     uint8_t th_off:4;
     uint8_t th_flags;
@@ -144,7 +147,7 @@ __attribute__((__packed__));
 #endif
 struct pseudohdr
 {
-    struct in_addr ip_src, ip_dst;
+    struct in_addr src_ip, dst_ip;
     uint8_t reserved;
     uint8_t protocol_type;
     uint16_t tcp_total_length;
@@ -221,23 +224,27 @@ __attribute__((__packed__));
 
 int bentool_main(int argc, char **argv);
 void usage(void);
+int arp_scan(int argc, ...);
+int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP);
 int ping_scan(int args, ...);
 int half_open_scan(int args, ...);
+int syn_flood(int argc, ...);
+
 uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);
-int tcp_half_scan(int argc, char **argv);
-int get_interface_devices(char * arg);
+void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
+void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
 int relay(uint8_t *dst_mac, char * if_name);
-uint16_t cksum(void *data, uint32_t len);
+int rst_packet_send(int argc, char **argv);
+int init_tcp_connection(int argc, char **argv);
+
+int get_interface_devices(char * arg);
 int get_info(struct nic_info *nic_info, char *if_name);
-int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP);
+int hostname_to_ip(char * hostname , struct in_addr *ip);
+uint16_t cksum(void *data, uint32_t len);
+
 void make_tcp_header_old(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
 void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
-void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
-void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
-int syn_flood(int argc, ...);
-int arp_scan(int argc, ...);
-int hostname_to_ip(char * hostname , struct in_addr *ip);
-int half_open_scan_old(int argc, char **argv);
+//int half_open_scan_old(int argc, char **argv);
 
 #endif

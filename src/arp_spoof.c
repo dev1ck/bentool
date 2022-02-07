@@ -72,12 +72,12 @@ int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
     sll.sll_halen = ETH_ALEN; // length of destination mac address
     memset(sll.sll_addr, 0xFF, 6);
 
-    buffer = make_arp_request_packet(info.my_mac, info.in_addr, target_ip);
-    if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+    buffer = make_arp_request_packet(info.my_mac, info.addr, target_ip);
+    if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
         perror("sendto"); 
         
-    buffer = make_arp_request_packet(info.my_mac, info.in_addr, host_ip);
-    if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+    buffer = make_arp_request_packet(info.my_mac, info.addr, host_ip);
+    if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
         perror("sendto");  
 
     pthread_join(thread_id, (void **)&arp_data);
@@ -95,7 +95,7 @@ int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
     while(1)
     {
         print_packet(&host_ip,info.my_mac,&target_ip,arp_data->target_mac);
-        if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+        if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
             perror("sendto");
         if(g_signal_fleg)
             break;
@@ -108,7 +108,7 @@ int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
     for(int i=0; i<3 ; i++)
     {
         print_packet(&host_ip,arp_data->host_mac,&target_ip,arp_data->target_mac);
-        if((len = sendto(sock, buffer, ARPMAX,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+        if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
             perror("sendto");
         sleep(1);
     }
@@ -123,7 +123,7 @@ void *thread_recivarp(void *p)
 {
     struct thread_arg *arg = (struct thread_arg *)p;
     int sock = arg->sock;
-    uint8_t buffer[ARPMAX];
+    uint8_t buffer[ARP_MAX_LEN];
     struct etherhdr *etherhdr;
     struct arphdr *arphdr;
     struct in_addr target_ip = arg->target_ip;

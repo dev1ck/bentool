@@ -67,7 +67,7 @@ int ping_scan(int argc, ...)
             }
             
             mask = ntohl(info.maskaddr.s_addr);
-            ip = ntohl(info.in_addr.s_addr);
+            ip = ntohl(info.addr.s_addr);
 
             start_ip = (ip&mask)+1;
             end_ip = (ip|~mask)-1;
@@ -182,7 +182,7 @@ int ping_scan(int argc, ...)
 
 void *thread_function(void *p)
 {
-	char buffer[PACKMAX];
+	char buffer[PACKET_MAX_LEN];
 	int sock;
     uint32_t * addr;
     int index = 0;
@@ -196,7 +196,7 @@ void *thread_function(void *p)
 
 	do
     {
-        if(read(sock, buffer, PACKMAX)<=0)
+        if(read(sock, buffer, PACKET_MAX_LEN)<=0)
         {
             continue;
         }
@@ -208,7 +208,7 @@ void *thread_function(void *p)
 			struct icmphdr *icmp = (struct icmphdr *)(buffer + ip_header_len);
 			if((icmp->icmp_type == 0) && (icmp->icmp_code == 0))
             {
-                addr[index]=ntohl(ip->ip_src.s_addr);
+                addr[index]=ntohl(ip->src_ip.s_addr);
                 index++;
                 if((addr = (uint32_t *)realloc(addr, sizeof(uint32_t)*(index+1))) == NULL)
                 {

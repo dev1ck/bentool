@@ -8,7 +8,6 @@
 struct opt_status
 {
     uint16_t flag;
-    int s_arg;
     int argc;
 };
 // 하나의 서브 옵션을 쓰는 메인 옵션이 많을 때 유용한 함수
@@ -50,19 +49,18 @@ int check_sub_option(int argc, char ** argv, char** main_opts, char* sub_opt)
     return 0;
 }
 
-int opt_count(int * start_arg, int optind, int argc, char **argv)
+int opt_count(int* optind, int argc, char **argv)
 {
-    for(*start_arg = optind; optind<argc ;optind++)
-        if(argv[optind][0] == 0 || argv[optind][0]=='-')
+    int start_arg = *optind;
+    for(; *optind<argc ;(*optind)++)
+        if(argv[*optind][0] == 0 || argv[*optind][0]=='-')
             break;
-    if(*start_arg!=optind)
-        return optind - *start_arg;
-    return 0;
+    return (*optind) - start_arg;
 }
 
 int bentool_main(int argc, char **argv)
 {
-    struct opt_status main_opt;
+    uint16_t main_flag = 0;
     char c;
     int i_flag;
     char *if_name = IF_NAME;
@@ -70,16 +68,11 @@ int bentool_main(int argc, char **argv)
     char *end_port = END_PORT;
     char* ck_sub_opt_p[] = {"-sH"}; // p option
     char* ck_sub_opt_l[] = {"-aS"}; // l option
-    char **argv2 = (char**)malloc(sizeof(char*)*argc);
+    char **argv_back = argv;
+    int main_argc;
 
-    for(int i = 0 ; i<argc ; i++)
-        argv2[i] = argv[i];
-
-    memset(&main_opt, 0 ,sizeof(struct opt_status));
-    main_opt.argc=1;
-
-    if(check_sub_option(argc, argv, ck_sub_opt_p, "-p") <0) return -1;
-    if(check_sub_option(argc, argv, ck_sub_opt_l, "-l") <0) return -1;
+    // if(check_sub_option(argc, argv, ck_sub_opt_p, "-p") <0) return -1;
+    // if(check_sub_option(argc, argv, ck_sub_opt_l, "-l") <0) return -1;
 
     while((c=getopt(argc,argv,"i::s::p::a::"))!=-1)
     {
@@ -90,8 +83,7 @@ int bentool_main(int argc, char **argv)
                 // optarg의 값이 없을 때 / -i 옵션 사용
                 if(!optarg)
                 {   
-                    main_opt.flag+=I;
-                    main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                    main_flag+=I;
                     break;
                 }
                 // optarg[0]의 값이 f일 때 / -if 옵션 사용
@@ -104,26 +96,8 @@ int bentool_main(int argc, char **argv)
                         printf("Option error\n");
                         return -1;
                     }
-                    int if_c;
-                    // if옵션 인자 개수 확인
-                    for(if_c=optind ; if_c<argc ;if_c++)
-                        if(argv[if_c][0] == 0 || argv[if_c][0]=='-')
-                            break;
-                    // if 인자 개수 0개일 때 에러처리
-                    if(if_c == optind)
-                    {
-                       printf("input interface name\n");
-                       return -1;
-                    }
-                    // if 인자 ./bentool -if opt1 opt2   argc = 4 optind = 2 if_c = 5
-                    // if 인자 개수 2개 이상일 때 에러처리
-                    else if((if_c - optind) > 1)
-                    {
-                        printf("Too many arguments\n");
-                        return -1;
-                    }
-                    else
-                        if_name = argv[optind];
+                    
+                    if_name = argv[optind++];
                 }
                 else
                     printf("No option\n");
@@ -141,18 +115,15 @@ int bentool_main(int argc, char **argv)
                 {
                     // 옵션이 sA 일 경우
                     case 'A':
-                        main_opt.flag+=sA; // flag[sA] 플래그 on
-                        main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                        main_flag+=sA; // flag[sA] 플래그 on
                         break;
                     // 옵션이 sP 일 경우
                     case 'P':
-                        main_opt.flag+=sP; // flag[sP] 플래그 on
-                        main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                        main_flag+=sP; // flag[sP] 플래그 on
                         break;
                     // 옵션이 sH 일 경우
                     case 'H':
-                        main_opt.flag+=sH; // flag[sH] 플래그 on
-                        main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                        main_flag+=sH; // flag[sH] 플래그 on
                         break;
                     default:
                         printf("No option\n");
@@ -163,23 +134,17 @@ int bentool_main(int argc, char **argv)
             case 'p':
                 if(!optarg)
                 {   
-                    int p_c;
-                
-                    for(p_c=optind ; p_c<argc ;p_c++)
-                        if(argv[p_c][0] == 0 || argv[p_c][0]=='-')
-                            break;
-                    
-                    switch(p_c-optind)
+                    switch(p_c)
                     {
                         case 0:
                             printf("Input Port Number\n");
                             return -1;
                         case 1:
-                            start_port = end_port = argv[optind];
+                            start_port = end_port = argv[optind-1];
                             break;
                         case 2:
-                            start_port = argv[optind];
-                            end_port = argv[optind+1];
+                            start_port = argv[optind-2];
+                            end_port = argv[optind-1];
                             break;
                         default:
                             printf("Too many options as -p");
@@ -198,8 +163,7 @@ int bentool_main(int argc, char **argv)
                 {
                     // 옵션이 pA 일 경우
                     case 'A':
-                        main_opt.flag+=pA; // flag[pA] 플래그 on
-                        main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                        main_flag+=pA; // flag[pA] 플래그 on
                         break;
                     default:
                         printf("No option\n");
@@ -219,8 +183,7 @@ int bentool_main(int argc, char **argv)
                 {
                     // 옵션이 aS 일 경우
                     case 'S':
-                        main_opt.flag=aS; // flag[aS] 플래그 on
-                        main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                        main_flag=aS; // flag[aS] 플래그 on
                         break;
                     default:
                         printf("No option\n");
@@ -233,92 +196,95 @@ int bentool_main(int argc, char **argv)
                 return -1;
         }
     }
-   switch (main_opt.flag)
-   {
+
+    main_argc = argc-optind;
+    switch (main_flag)
+    {
         case 0:
             printf("Use Option\n");
             break;
         case I:
-            switch(main_opt.argc)
+            switch(main_argc)
             {
-                case 1:
+                case 0:
                     get_interface_devices(NULL);
                     break;
-                case 2:
-                    get_interface_devices(argv2[main_opt.s_arg]);
+                case 1:
+                    get_interface_devices(argv[optind]);
                     break;
                 default:
                     printf("Too many arguments\n");
             }
             break;
         case sA:
-            switch(main_opt.argc)
+            main_argc++;
+            switch(main_argc)
             {
                 case 1:
-                    arp_scan(main_opt.argc, if_name);
+                    arp_scan(main_argc, if_name);
                     break;
                 case 2:
-                    arp_scan(main_opt.argc, if_name,argv2[main_opt.s_arg]);
+                    arp_scan(main_argc, if_name,argv[optind]);
                     break;
                 case 3:
-                    arp_scan(main_opt.argc, if_name,argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
+                    arp_scan(main_argc, if_name,argv[optind], argv[optind+1]);
                     break;
                 default:
                     printf("Too many arguments\n");
             }
             break;        
         case sP:
-            switch(main_opt.argc)
+            main_argc++;
+            switch(main_argc)
             {
                 case 1:
-                    ping_scan(main_opt.argc, if_name);
+                    ping_scan(main_argc, if_name);
                     break;
                 case 2:
-                    ping_scan(main_opt.argc, if_name,argv2[main_opt.s_arg]);
+                    ping_scan(main_argc, if_name,argv[optind]);
                     break;
                 case 3:
-                    ping_scan(main_opt.argc, if_name,argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
+                    ping_scan(main_argc, if_name,argv[optind], argv[optind+1]);
                     break;
                 default:
                     printf("Incorrect use\n");
             }
             break;
         case sH:
-            main_opt.argc +=2;
-            switch(main_opt.argc)
+            main_argc+=2;
+            switch(main_argc)
             {
                 case 3:
-                    half_open_scan(main_opt.argc, if_name, start_port , end_port);
+                    half_open_scan(main_argc, if_name, start_port , end_port);
                     break;
                 case 4:
-                    half_open_scan(main_opt.argc, if_name, start_port , end_port, argv2[main_opt.s_arg]);
+                    half_open_scan(main_argc, if_name, start_port , end_port, argv[optind]);
                     break;
                 case 5:
-                    half_open_scan(main_opt.argc, if_name, start_port , end_port, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
+                    half_open_scan(main_argc, if_name, start_port , end_port, argv[optind], argv[optind+1]);
                     break;
                 default:
                     printf("Incorrect use\n");
             }
             break;
         case pA:
-            switch(main_opt.argc)
+            switch(main_argc)
             {
-                case 3:
-                    arp_spoof(if_name, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
+                case 2:
+                    arp_spoof(if_name, argv[optind], argv[optind+1]);
                     break;
                 default:
                     printf("Incorrect use\n");
             }
             break;
         case aS:
-             main_opt.argc--;
-            switch(main_opt.argc)
+            switch(main_argc)
             {
                 case 1:
-                    syn_flood(main_opt.argc, argv2[main_opt.s_arg]);
+                    syn_flood(main_argc, argv[optind]);
                     break;
                 case 2:
-                    syn_flood(main_opt.argc, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
+                    syn_flood(main_argc, argv[optind], argv[optind+1]);
                     break;
                 default:
                     printf("Incorrect use\n");
@@ -326,7 +292,6 @@ int bentool_main(int argc, char **argv)
             break;
         default:
             printf("Too many use option\n");
-   }
-    free(argv2);
+    }
     return 0;
 }

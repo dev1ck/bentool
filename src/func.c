@@ -117,9 +117,9 @@ int get_info(struct nic_info *nic_info, char *if_name)
         if(!strcmp(ifr->ifr_name, if_name))
         {
             addr = (struct sockaddr_in*)&ifr->ifr_addr;
-            nic_info->in_addr.s_addr = addr->sin_addr.s_addr;
+            nic_info->addr.s_addr = addr->sin_addr.s_addr;
 
-            if(ntohl(nic_info->in_addr.s_addr) != INADDR_LOOPBACK)
+            if(ntohl(nic_info->addr.s_addr) != INADDR_LOOPBACK)
             {
                 if(ioctl(sock, SIOCGIFHWADDR, (char*)ifr) < 0)
                 {
@@ -174,7 +174,7 @@ int get_info(struct nic_info *nic_info, char *if_name)
 int relay(uint8_t *dst_mac, char *if_name)
 {  
     int sock, len, rlen;
-    unsigned char buffer[ETHMAX]={0,};
+    unsigned char buffer[ETH_MAX_LEN]={0,};
     struct sockaddr_ll sll, sadr_ll;
     struct nic_info info;
     struct etherhdr* eth_h;
@@ -205,15 +205,15 @@ int relay(uint8_t *dst_mac, char *if_name)
 
     while(1)
     {
-        if((rlen = read(sock, buffer, ETHMAX))<0)
+        if((rlen = read(sock, buffer, ETH_MAX_LEN))<0)
             perror("read");
 
         iphdr_ptr = buffer + sizeof(struct etherhdr);
         eth_h = (struct etherhdr*)buffer;
         ip_header = (struct iphdr*)iphdr_ptr;
         
-        if(ip_header->ip_src.s_addr != info.in_addr.s_addr &&
-           ip_header->ip_dst.s_addr != info.in_addr.s_addr)
+        if(ip_header->src_ip.s_addr != info.addr.s_addr &&
+           ip_header->dst_ip.s_addr != info.addr.s_addr)
         {
             memcpy(eth_h->ether_dhost,dst_mac,6);
             memcpy(eth_h->ether_shost, info.my_mac, 6);
@@ -235,7 +235,7 @@ uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip
 {
     struct etherhdr etherhdr;
     struct arphdr arphdr;
-    static uint8_t buffer[ARPMAX];
+    static uint8_t buffer[ARP_MAX_LEN];
 
     arphdr.ar_hrd = htons(0x0001);
     arphdr.ar_pro = htons(0x0800);
@@ -263,7 +263,7 @@ uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, 
 {
     struct etherhdr etherhdr;
     struct arphdr arphdr;
-    static uint8_t buffer[ARPMAX];
+    static uint8_t buffer[ARP_MAX_LEN];
 
     arphdr.ar_hrd = htons(0x0001);
     arphdr.ar_pro = htons(0x0800);
@@ -320,8 +320,8 @@ void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_
     struct tcp_cksum_hdr cksum_hdr;
     memset(&cksum_hdr, 0, sizeof(cksum_hdr));
 
-    cksum_hdr.pseudohdr.ip_src = src_ip;
-    cksum_hdr.pseudohdr.ip_dst = dst_ip;
+    cksum_hdr.pseudohdr.src_ip = src_ip;
+    cksum_hdr.pseudohdr.dst_ip = dst_ip;
     cksum_hdr.pseudohdr.protocol_type = IPPROTO_TCP;
     cksum_hdr.pseudohdr.tcp_total_length = htons(sizeof(struct tcphdr));
 
@@ -348,8 +348,8 @@ void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr d
     iphdr->ip_off = htons(0);
     iphdr->ip_ttl = 128;
     iphdr->ip_p = IPPROTO_TCP;
-    iphdr->ip_src = src_ip;
-    iphdr->ip_dst = dst_ip;
+    iphdr->src_ip = src_ip;
+    iphdr->dst_ip = dst_ip;
     iphdr->ip_sum = 0;
     iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
 }
@@ -367,8 +367,8 @@ void make_tcp_header_old(struct tcp_packet *packet, const char *src_ip, uint16_t
 
     packet->iphdr.ip_ttl = 0;
     packet->iphdr.ip_p = IPPROTO_TCP;
-    packet->iphdr.ip_src.s_addr = inet_addr(src_ip);
-    packet->iphdr.ip_dst.s_addr = inet_addr(dst_ip);
+    packet->iphdr.src_ip.s_addr = inet_addr(src_ip);
+    packet->iphdr.dst_ip.s_addr = inet_addr(dst_ip);
     packet->iphdr.ip_sum = htons(sizeof(packet->tcphdr));
 
     packet->tcphdr.th_sum = 0;
@@ -386,8 +386,8 @@ void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst
     iphdr->ip_off = htons(0);
     iphdr->ip_ttl = 128;
     iphdr->ip_p = IPPROTO_TCP;
-    iphdr->ip_src.s_addr = inet_addr(src_ip);
-    iphdr->ip_dst.s_addr = inet_addr(dst_ip);
+    iphdr->src_ip.s_addr = inet_addr(src_ip);
+    iphdr->dst_ip.s_addr = inet_addr(dst_ip);
     iphdr->ip_sum = 0;
     iphdr->ip_sum = cksum((void*)iphdr, sizeof(struct iphdr));
 }

@@ -51,10 +51,15 @@ int half_open_scan(int args, ...)
     struct nic_info nic_info;
     struct param_data param;
     struct tcphdr packet;
+    //char start_port;
+    //char end_port;
 
     va_list ap;
     va_start(ap, args);
     if_name = va_arg(ap, char*);
+
+    // start_port = va_arg(ap,char*);
+    // end_port = va_arg(ap,char*);
 
     if((param.sock = socket(PF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)
     {
