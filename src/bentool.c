@@ -1,6 +1,7 @@
 #include "protocol.h"
 
 #define IF_NAME "eth0"
+#define THREAD_NUM "12"
 #define START_PORT "0"
 #define END_PORT "1023"
 
@@ -52,12 +53,15 @@ int check_sub_option(int argc, char ** argv, char** main_opts, char* sub_opt)
 
 int opt_count(int * start_arg, int optind, int argc, char **argv)
 {
-    for(*start_arg = optind; optind<argc ;optind++)
-        if(argv[optind][0] == 0 || argv[optind][0]=='-')
+    int i = optind;
+    if(start_arg != NULL)
+        *start_arg=i;
+
+    for(; i<argc ;i++)
+        if(argv[i][0] == 0 || argv[i][0]=='-')
             break;
-    if(*start_arg!=optind)
-        return optind - *start_arg;
-    return 0;
+
+    return i - optind;
 }
 
 int bentool_main(int argc, char **argv)
@@ -68,6 +72,7 @@ int bentool_main(int argc, char **argv)
     char *if_name = IF_NAME;
     char *start_port = START_PORT;
     char *end_port = END_PORT;
+    char *attack_level = THREAD_NUM;
     char* ck_sub_opt_p[] = {"-sH"}; // p option
     char* ck_sub_opt_l[] = {"-aS"}; // l option
     char **argv2 = (char**)malloc(sizeof(char*)*argc);
@@ -78,10 +83,18 @@ int bentool_main(int argc, char **argv)
     memset(&main_opt, 0 ,sizeof(struct opt_status));
     main_opt.argc=1;
 
-    if(check_sub_option(argc, argv, ck_sub_opt_p, "-p") <0) return -1;
-    if(check_sub_option(argc, argv, ck_sub_opt_l, "-l") <0) return -1;
+    if(check_sub_option(argc, argv, ck_sub_opt_p, "-p") <0)
+    {
+        printf("-p option enable -sH option\n");
+        return -1;
+    }
+    if(check_sub_option(argc, argv, ck_sub_opt_l, "-l") <0)
+    {
+        printf("-l option enable -aS option\n");
+        return -1;
+    }
 
-    while((c=getopt(argc,argv,"i::s::p::a::"))!=-1)
+    while((c=getopt(argc,argv,"i::s::p::a::l::"))!=-1)
     {
         switch(c)
         {
@@ -104,26 +117,20 @@ int bentool_main(int argc, char **argv)
                         printf("Option error\n");
                         return -1;
                     }
-                    int if_c;
-                    // if옵션 인자 개수 확인
-                    for(if_c=optind ; if_c<argc ;if_c++)
-                        if(argv[if_c][0] == 0 || argv[if_c][0]=='-')
+                    int if_c = opt_count(NULL, optind, argc, argv);
+
+                    switch(if_c)
+                    {
+                        case 0:
+                            printf("Input interface name\n");
+                            return -1;
+                        case 1:
+                            if_name = argv[optind];
                             break;
-                    // if 인자 개수 0개일 때 에러처리
-                    if(if_c == optind)
-                    {
-                       printf("input interface name\n");
-                       return -1;
-                    }
-                    // if 인자 ./bentool -if opt1 opt2   argc = 4 optind = 2 if_c = 5
-                    // if 인자 개수 2개 이상일 때 에러처리
-                    else if((if_c - optind) > 1)
-                    {
-                        printf("Too many arguments\n");
-                        return -1;
-                    }
-                    else
-                        if_name = argv[optind];
+                        default:
+                            printf("Too many arguments as -if\n");
+                            return -1;
+                    }                       
                 }
                 else
                     printf("No option\n");
@@ -163,13 +170,9 @@ int bentool_main(int argc, char **argv)
             case 'p':
                 if(!optarg)
                 {   
-                    int p_c;
-                
-                    for(p_c=optind ; p_c<argc ;p_c++)
-                        if(argv[p_c][0] == 0 || argv[p_c][0]=='-')
-                            break;
+                    int p_c = opt_count(NULL, optind, argc, argv);
                     
-                    switch(p_c-optind)
+                    switch(p_c)
                     {
                         case 0:
                             printf("Input Port Number\n");
@@ -182,7 +185,7 @@ int bentool_main(int argc, char **argv)
                             end_port = argv[optind+1];
                             break;
                         default:
-                            printf("Too many options as -p");
+                            printf("Too many arguments as -p");
                             return -1;
                     }
                     break;
@@ -228,6 +231,26 @@ int bentool_main(int argc, char **argv)
                 }
                 break;
 
+            case 'l':
+                if(!optarg)
+                {   
+                    int l_c = opt_count(NULL, optind, argc, argv);
+                    
+                    switch(l_c)
+                    {
+                        case 0:
+                            printf("Input attack level\n");
+                            return -1;
+                        case 1:
+                            attack_level = argv[optind];
+                            break;
+                        default:
+                            printf("Too many arguments as -p");
+                            return -1;
+                    }
+                    break;
+                }
+                
             // error
             case '?':
                 return -1;
@@ -311,14 +334,13 @@ int bentool_main(int argc, char **argv)
             }
             break;
         case aS:
-             main_opt.argc--;
             switch(main_opt.argc)
             {
-                case 1:
-                    syn_flood(main_opt.argc, argv2[main_opt.s_arg]);
-                    break;
                 case 2:
-                    syn_flood(main_opt.argc, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
+                    syn_flood(main_opt.argc, attack_level, argv2[main_opt.s_arg]);
+                    break;
+                case 3:
+                    syn_flood(main_opt.argc, attack_level, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
                     break;
                 default:
                     printf("Incorrect use\n");
