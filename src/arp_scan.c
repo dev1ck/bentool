@@ -15,14 +15,6 @@ struct save_addrs
     uint8_t hw_addr[6];  
 };
 
-// pthraed join 결과 수신한 결과를 저장하기 위함
-struct arp_data
-{
-    uint8_t target_mac[6];
-    uint8_t host_mac[6];
-};
-
-
 void *thread(void*t); // 수신하고 화면에 출력하는 쓰레드
 void *timer(); // 타이머
 void arp_quick_sort(struct save_addrs *addr, int start, int end); // 화면에 출력하기 전 정렬 하기 위함
@@ -51,8 +43,8 @@ int arp_scan(int argc, ...)
     struct in_addr start_ip, end_ip;
     
     pthread_t thread_id ,timer_id;
-    
     va_list ap;
+    
     va_start(ap, argc);
     
     clock_t start_time, end_time;
@@ -65,28 +57,26 @@ int arp_scan(int argc, ...)
     va_end(ap);
 
     //struct sockaddr recv_ip;
-    printf("\n\n===== Starting ARP_Scan.. =====\n");
+    printf("\n===== Starting ARP Scan... =====\n");
 
     start_time=time(NULL);
 
-    if((sock=socket(PF_PACKET,SOCK_RAW,htons(ETH_P_ALL))) < 0)
+    if((sock = socket(PF_PACKET,SOCK_RAW,htons(ETH_P_ALL))) < 0)
     {
-        perror("socket ");
+        perror("socket");
         return -1;
     };
     
     if(get_info(&info, argv[0]) < 0)
-    {
-        printf("\n\n=====!! Failed Loading Interface!!=====\n\n");
+    {   
+        printf("\n===== !! Failed to get information of %s !! =====\n", argv[0]);
         close(sock);
         return -1;
     }
     
-    printf("\n\nmy ip : %s", inet_ntoa(info.addr));
-
     memset(&sll, 0, sizeof(sll));
-    sll.sll_ifindex=info.ifindex;
-    sll.sll_halen   = ETH_ALEN;
+    sll.sll_ifindex = info.ifindex;
+    sll.sll_halen = ETH_ALEN;
     memset(sll.sll_addr, 0xff, 6);
     
     pthread_create(&thread_id, NULL, thread, &sock);
@@ -94,7 +84,7 @@ int arp_scan(int argc, ...)
 
     usleep(5); // 수신을 먼저 하지만, 손실 데이터가 존재할 수 있으므로 프로그램에 딜레이 줌
 
-    if(argc==1)
+    if(argc == 1)
     {
         start_argv = htonl(info.maskaddr.s_addr);
         end_argv = htonl(info.addr.s_addr);
@@ -110,7 +100,7 @@ int arp_scan(int argc, ...)
         //strcpy(p_sip, inet_ntoa(start_ip));
         //strcpy(p_eip, inet_ntoa(end_ip));
         
-        printf("\n\nSend to ARP Packet : all range / %s ~ %s \n", p_sip, p_eip);
+        printf("\nSend to ARP Packet : all range / %s ~ %s \n", p_sip, p_eip);
         
         g_revflag=1;
         for(tmp_ip = start_argv; tmp_ip <= end_argv; tmp_ip++)
@@ -125,28 +115,31 @@ int arp_scan(int argc, ...)
         
         if(inet_aton(argv[1], &tip) == 0)
         {
-            printf("ip addr insert error\n");
+            printf("IP address insert error\n");
+            return -1;
         }
-        if(tip.s_addr==info.addr.s_addr) // 입력한 ip가 내 ip 일 경우
+
+        if(tip.s_addr == info.addr.s_addr) // 입력한 ip가 내 ip 일 경우
         {
-            g_stopflag=1;
-            g_my_ip=1;
+            g_stopflag = 1;
+            g_my_ip = 1;
         }
-        printf("\n\nSend To ARP Packet : %s\n", argv[1]);
+
+        printf("\nSend To ARP Packet : %s\n", argv[1]);
         
-        send_arp(sock, info.my_mac, info.addr, tip, sll);
+        if(send_arp(sock, info.my_mac, info.addr, tip, sll)<0) return - 1;
         
         g_oipflag=1;
 
     }
     else if(argc==3)
     {
-        start_argv=ntohl(inet_addr(argv[1]));
-        end_argv=ntohl(inet_addr(argv[2]));
+        start_argv = ntohl(inet_addr(argv[1]));
+        end_argv = ntohl(inet_addr(argv[2]));
         
         if(start_argv == -1||end_argv == -1)
         {
-            printf("\nIP Address error\n");
+            printf("IP Address insert error\n");
             return -1;
         }
 
@@ -161,13 +154,13 @@ int arp_scan(int argc, ...)
             tip.s_addr = htonl(start_argv);
             if(tip.s_addr == info.addr.s_addr)
             {
-                g_stopflag=1;
-                g_my_ip=1;
+                g_stopflag = 1;
+                g_my_ip = 1;
             }
-            printf("\n\nSend To ARP Packet : %s\n", argv[1]);
+            printf("\nSend To ARP Packet : %s\n", argv[1]);
 
-            send_arp(sock,info.my_mac,info.addr,tip,sll);
-            g_oipflag=1;
+            send_arp(sock, info.my_mac, info.addr, tip, sll);
+            g_oipflag = 1;
 
         }
         else
@@ -178,7 +171,7 @@ int arp_scan(int argc, ...)
             strncpy(p_sip, inet_ntoa(start_ip),16);
             strncpy(p_eip, inet_ntoa(end_ip),16);
 
-            printf("\n\nSend To ARP Packet : %s ~ %s \n", p_sip, p_eip);
+            printf("\nSend To ARP Packet : %s ~ %s\n", p_sip, p_eip);
             
             g_revflag=1; // 범위 스캔의 경우 타이머가 돌지 않도록 함.
             
@@ -199,10 +192,10 @@ int arp_scan(int argc, ...)
     //     return -1;
     // }
 
-    printf("\n\n===== Live IP =====\n\n");  
+    printf("\n===== Host List =====\n\n");  
     if(g_my_ip==1)
     {
-        printf("\n%s is my IP\n", inet_ntoa(tip));
+        printf("%s is my IP\n", inet_ntoa(tip));
         close(sock);
         exit(1);
     }
@@ -212,10 +205,10 @@ int arp_scan(int argc, ...)
         g_stopflag=1;
     }
 
-    pthread_join(thread_id, (void **)&arp_data);
+    pthread_join(thread_id, NULL);
     end_time = time(NULL);
     
-    printf("\n\nworking time : %.1f\n", (double)(end_time-start_time));
+    printf("scanned in %d seconds\n", (end_time - start_time));
     close(sock);
 
     return 0;
@@ -255,10 +248,8 @@ void *thread(void *t)
     
     do 
     { 
-        if(read(sock, rep_buf, sizeof(rep_buf)) < 0)
-        {
-            continue;
-        }
+        if(read(sock, rep_buf, sizeof(rep_buf)) < 0) continue;
+        
 
         etherhdr = (struct etherhdr *)rep_buf;
         arphdr = (struct arphdr*)(rep_buf + sizeof(struct etherhdr));
@@ -276,14 +267,10 @@ void *thread(void *t)
                
                 if((s_addr = (struct save_addrs *)realloc(s_addr, sizeof(struct save_addrs)*(index+1))) == NULL)
                 {
-                    printf("Memory full error\n");
+                    printf("Memory is full\n");
                     break;
                 }
-                if(g_oipflag==1)
-                {
-                    
-                    g_stopflag=1;
-                }
+                if(g_oipflag==1) g_stopflag=1;
             }
         }
         
@@ -297,7 +284,7 @@ void *thread(void *t)
     {
         rev_ip.s_addr = htonl(s_addr[i].ip_addr);
     
-        printf("host up : %s [%02x:%02x:%02x:%02x:%02x:%02x]\n",inet_ntoa(rev_ip), s_addr[i].hw_addr[0],s_addr[i].hw_addr[1],s_addr[i].hw_addr[2],s_addr[i].hw_addr[3],s_addr[i].hw_addr[4],s_addr[i].hw_addr[5]);
+        printf("[host up] %s (%02x:%02x:%02x:%02x:%02x:%02x)\n",inet_ntoa(rev_ip), s_addr[i].hw_addr[0],s_addr[i].hw_addr[1],s_addr[i].hw_addr[2],s_addr[i].hw_addr[3],s_addr[i].hw_addr[4],s_addr[i].hw_addr[5]);
     }
     printf("\n%d hosts is up\n",index);
 
@@ -306,6 +293,7 @@ void *thread(void *t)
 
 
 }
+
 void *timer()
 {
     int time;
@@ -314,25 +302,15 @@ void *timer()
         if(g_revflag==0)
         {   
             for(time=0;time<10;time++)
-            {
                 sleep(1);
-            }
-            if(g_revflag==0)
-            {
-                g_stopflag=1;
-            }
-            else
-            {
-                break;
-            }
+            if(g_revflag==0) g_stopflag=1;
+            else break;
         }
-        else
-        {
-            break;
-        }
+        else break;
     }
 
 }
+
 void arp_quick_sort(struct save_addrs *addr, int start, int end)
 {
     if(start >= end) return;
@@ -363,7 +341,3 @@ void arp_quick_sort(struct save_addrs *addr, int start, int end)
     arp_quick_sort(addr, start, j - 1);
     arp_quick_sort(addr, j + 1, end);
 }
-
-
-    
-    

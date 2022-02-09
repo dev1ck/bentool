@@ -1,19 +1,20 @@
+./bnetool -i [<interface_name>]
 
-./bentool -sA [start IP] [end IP] [-if interface_name]
+./bentool -sA [-if <interface_name>]
+./bentool -sA <target IP> [-if <interface_name>]
+./bentool -sA <start IP> <end IP> [-if <interface_name>]
 
 ./bentool -sP [-if interface_name]
-./bentool -sP <target IP or Domain> [-if interface_name]
-./bentool -sP <Network ID:prefix> [-if interface_name]
-./bentool -sP <start IP> <end IP> [-if interface_name]
+./bentool -sP <target IP or Domain> [-if <interface_name>]
+./bentool -sP <Network ID>:<prefix> [-if <interface_name>]
+./bentool -sP <start IP> <end IP> [-if <intrface_name>]
 
-./bentool -sH [-p <port> [end_port]] [-if interface_name]
-./bentool -sH <target IP> [end IP] [-p <port> [end_port]] [-if interface_name]
-./bentool -sH <start IP> <end IP> [-p <port> [end_port]] [-if interface_name]
+./bentool -sH [-p <port>] [-if <interface_name>]
+./bentool -sH [-p <port> <end_port>] [-if <interface_name>]
+./bentool -sH <target IP> [-p <port> [end_port]] [-if <inerface_name>]
+./bentool -sH <start IP> <end IP> [-p <port> [end_port]] [-if <intrface_name>]
 
-./bentool -pS <target IP> <host IP>
-./bentool -pS <target IP> <host IP> [-if interface_name]
+./bentool -pS <target IP> <host IP> [-if <inerface_name>]
 
 ./bentool -aS <target IP or Domain/port>
-./bentool -aS <target IP> <port>
-./bentool -aS <target IP> <port> [-l attack_level(1~20)]
-./bentool -aS <target IP> <port> [-l attack_level(1~20)] [-if interface_name]
+./bentool -aS <target IP> <port> [-l <attack_level>] [-if <interface_name>] 

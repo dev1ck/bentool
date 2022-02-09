@@ -1,4 +1,5 @@
 #include "protocol.h"
+#include "usages.h"
 
 #define IF_NAME "eth0"
 #define THREAD_NUM "12"
@@ -94,10 +95,70 @@ int bentool_main(int argc, char **argv)
         return -1;
     }
 
-    while((c=getopt(argc,argv,"i::s::p::a::l::"))!=-1)
+    while((c=getopt(argc,argv,"i::s::p::a::l::h::"))!=-1)
     {
         switch(c)
         {
+            case 'h':
+                if(!optarg)
+                {
+                    int h_c = 0; //help arguments count
+                    for(h_c=optind; h_c<argc ; h_c++)
+                        if(argv[h_c] == NULL) break;
+                    
+                    h_c = h_c - optind;
+                    
+                    if(!h_c)
+                    {
+                        usage_help();
+                        return 0;
+                    }
+                    else if(h_c>1)
+                    {
+                        printf("Help arguments error\n");
+                        usage();
+                        return -1;
+                    }
+                    else
+                    {
+                        if(!strcmp(argv[optind], "-i"))
+                        {
+                            usage_i();
+                            return 0;
+                        }
+                        else if(!strcmp(argv[optind], "-sA"))
+                        {
+                            usage_sa();
+                            return 0;
+                        }
+                        else if(!strcmp(argv[optind], "-sP"))
+                        {
+                            usage_sp();
+                            return 0;
+                        }
+                        else if(!strcmp(argv[optind], "-sH"))
+                        {
+                            usage_sh();
+                            return 0;
+                        }
+                        else if(!strcmp(argv[optind], "-pA"))
+                        {
+                            usage_pa();
+                            return 0;
+                        }
+                        else if(!strcmp(argv[optind], "-aS"))
+                        {
+                            usage_as();
+                            return 0;
+                        }
+                        else
+                        {
+                            printf("\"%s\" option undefined\n",argv[optind]);
+                            usage();
+                            return -1;
+                        }    
+                    }
+                }
             // i 옵션 check on/off
             case 'i':
                 // optarg의 값이 없을 때 / -i 옵션 사용
@@ -112,9 +173,10 @@ int bentool_main(int argc, char **argv)
                 else if(optarg[0]=='f')
                 {
                     // optarg 인자 2개 이상일 때 에러처리 - Ex)ifc
-                    if(optarg[1])
+                    if(optarg[1]) //
                     {
-                        printf("Option error\n");
+                        printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                        usage();
                         return -1;
                     }
                     int if_c = opt_count(NULL, optind, argc, argv);
@@ -123,24 +185,31 @@ int bentool_main(int argc, char **argv)
                     {
                         case 0:
                             printf("Input interface name\n");
+                            usage();
                             return -1;
                         case 1:
                             if_name = argv[optind];
                             break;
                         default:
-                            printf("Too many arguments as -if\n");
+                            printf("Too many arguments used for [-if]\n");
+                            usage();
                             return -1;
                     }                       
                 }
-                else
-                    printf("No option\n");
+                else //optarg 인자가 2개이나 f가 아닐 때 예외처리
+                {
+                    printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                    usage();
+                    return -1;
+                }
                 break;
             // s 옵션 check on/off
             case 's':
                 // s뒤에 문자가 없거나, 옵션 문자열이 3글자 이상일 경우 에러처리 
                 if(!optarg || optarg[1])
                 {   
-                    printf("Option error\n");
+                    printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                    usage();
                     return -1;
                 }
                 char s = optarg[0];
@@ -162,7 +231,8 @@ int bentool_main(int argc, char **argv)
                         main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
                         break;
                     default:
-                        printf("No option\n");
+                        printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                        usage();
                         return -1;
                 }
                 break;
@@ -176,6 +246,7 @@ int bentool_main(int argc, char **argv)
                     {
                         case 0:
                             printf("Input Port Number\n");
+                            usage_sh();
                             return -1;
                         case 1:
                             start_port = end_port = argv[optind];
@@ -185,7 +256,8 @@ int bentool_main(int argc, char **argv)
                             end_port = argv[optind+1];
                             break;
                         default:
-                            printf("Too many arguments as -p");
+                            printf("Too many arguments used for [-p]");
+                            usage_sh();
                             return -1;
                     }
                     break;
@@ -193,7 +265,8 @@ int bentool_main(int argc, char **argv)
                 // 옵션문자열 3글자 이상일 경우 애러처리 
                 else if(optarg[1])
                 {   
-                    printf("Option error\n");
+                    printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                    usage();
                     return -1;
                 }
                 char p = optarg[0];
@@ -205,7 +278,8 @@ int bentool_main(int argc, char **argv)
                         main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
                         break;
                     default:
-                        printf("No option\n");
+                        printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                        usage();
                         return -1;
                 }
                 break;
@@ -214,7 +288,8 @@ int bentool_main(int argc, char **argv)
                 // optarg 의 값이 없거나, 옵션이 2개일 경우 애러처리 
                 if(!optarg || optarg[1])
                 {   
-                    printf("Option error\n");
+                    printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                    usage();
                     return -1;
                 }
                 char a = optarg[0];
@@ -226,7 +301,8 @@ int bentool_main(int argc, char **argv)
                         main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
                         break;
                     default:
-                        printf("No option\n");
+                        printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                        usage();
                         return -1;
                 }
                 break;
@@ -240,12 +316,14 @@ int bentool_main(int argc, char **argv)
                     {
                         case 0:
                             printf("Input attack level\n");
+                            usage_as();
                             return -1;
                         case 1:
                             attack_level = argv[optind];
                             break;
                         default:
-                            printf("Too many arguments as -p");
+                            printf("Too many arguments used for [-p]");
+                            usage_as();
                             return -1;
                     }
                     break;
@@ -259,7 +337,7 @@ int bentool_main(int argc, char **argv)
    switch (main_opt.flag)
    {
         case 0:
-            printf("Use Option\n");
+            usage();
             break;
         case I:
             switch(main_opt.argc)
@@ -271,7 +349,9 @@ int bentool_main(int argc, char **argv)
                     get_interface_devices(argv2[main_opt.s_arg]);
                     break;
                 default:
-                    printf("Too many arguments\n");
+                    printf("Too many arguments used for [-i]\n");
+                    usage_i();
+                    return -1;
             }
             break;
         case sA:
@@ -287,7 +367,9 @@ int bentool_main(int argc, char **argv)
                     arp_scan(main_opt.argc, if_name,argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
                     break;
                 default:
-                    printf("Too many arguments\n");
+                    printf("Too many arguments used for [-sA]\n");
+                    usage_sa();
+                    return -1;
             }
             break;        
         case sP:
@@ -303,7 +385,9 @@ int bentool_main(int argc, char **argv)
                     ping_scan(main_opt.argc, if_name,argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
                     break;
                 default:
-                    printf("Incorrect use\n");
+                    printf("Too many arguments used for [-sP]\n");
+                    usage_sp();
+                    return -1;
             }
             break;
         case sH:
@@ -320,7 +404,9 @@ int bentool_main(int argc, char **argv)
                     half_open_scan(main_opt.argc, if_name, start_port , end_port, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
                     break;
                 default:
-                    printf("Incorrect use\n");
+                    printf("Too many arguments used for [-sH]\n");
+                    usage_sh();
+                    return -1;
             }
             break;
         case pA:
@@ -330,7 +416,9 @@ int bentool_main(int argc, char **argv)
                     arp_spoof(if_name, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
                     break;
                 default:
-                    printf("Incorrect use\n");
+                    printf("Too many arguments used for [-pA]\n");
+                    usage_pa();
+                    return -1;
             }
             break;
         case aS:
@@ -343,11 +431,14 @@ int bentool_main(int argc, char **argv)
                     syn_flood(main_opt.argc, attack_level, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
                     break;
                 default:
-                    printf("Incorrect use\n");
+                    printf("Too many arguments used for [-aS]\n");
+                    usage_as();
+                    return -1;
             }
             break;
-        default:
-            printf("Too many use option\n");
+        default: // -i, -sA, -aS 등의 main 옵션들이 여러개 일 때
+            usage();
+            return -1;
    }
     free(argv2);
     return 0;
