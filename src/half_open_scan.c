@@ -93,7 +93,10 @@ int half_open_scan(int args, ...)
                 strncpy(src, inet_ntoa(param.src_ip), strlen(inet_ntoa(param.src_ip)));
                 strncpy(dst, inet_ntoa(param.dst_ip), strlen(inet_ntoa(param.dst_ip)));
 
-                printf("Send to TCP SYN flag Packet : %s ~ %s (%d ~ %d)\n", src, dst, start_port, end_port);
+                if(start_port == end_port)
+                    printf("Send to TCP SYN flag Packet : %s ~ %s (%d)\n", src, dst, start_port);
+                else
+                    printf("Send to TCP SYN flag Packet : %s ~ %s (%d ~ %d)\n", src, dst, start_port, end_port);
                 printf("\n===== Host List =====\n\n");  
 
                 for(; start_ip <= end_ip; start_ip++)
@@ -120,14 +123,23 @@ int half_open_scan(int args, ...)
             }
         case 4:
             {
-                inet_aton(va_arg(ap, char*), &addr.sin_addr);
+                char * data = va_arg(ap, char*);
+                if(hostname_to_ip(data, &addr.sin_addr) < 0)
+                {
+                    printf("\"%s\" host not found, check hostname\n", data);
+                    close(param.sock);
+                    return -1;
+                }
                 va_end(ap); 
                 //printf("%s\n",inet_ntoa(addr.sin_addr));
                 param.src_ip.s_addr = addr.sin_addr.s_addr;
                 param.dst_ip.s_addr = addr.sin_addr.s_addr;
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
                 
-                printf("Send to TCP SYN flag Packet : %s (%d ~ %d)\n", inet_ntoa(addr.sin_addr), start_port, end_port);
+                if(start_port == end_port)
+                    printf("Send to TCP SYN flag Packet : %s (%d)\n", inet_ntoa(addr.sin_addr), start_port);
+                else
+                    printf("Send to TCP SYN flag Packet : %s (%d ~ %d)\n", inet_ntoa(addr.sin_addr), start_port, end_port);
 
                 printf("\n===== Host List =====\n\n");  
 
@@ -159,8 +171,11 @@ int half_open_scan(int args, ...)
 
                 strncpy(src, inet_ntoa(param.src_ip), strlen(inet_ntoa(param.src_ip)));
                 strncpy(dst, inet_ntoa(param.dst_ip), strlen(inet_ntoa(param.dst_ip)));
-
-                printf("Send to TCP SYN flag Packet : %s ~ %s (%d ~ %d)\n", src, dst, start_port, end_port);
+                
+                if(start_port == end_port)
+                    printf("Send to TCP SYN flag Packet : %s ~ %s (%d)\n", src, dst, start_port);
+                else
+                    printf("Send to TCP SYN flag Packet : %s ~ %s (%d ~ %d)\n", src, dst, start_port, end_port);
 
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
                 
@@ -194,7 +209,7 @@ int half_open_scan(int args, ...)
                 break;
             }
     }
-    sleep(1);
+    sleep(3);
     g_tcp_end_flag=1;
 
     pthread_join(thread_id, NULL);
