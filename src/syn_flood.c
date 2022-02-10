@@ -129,8 +129,6 @@ int attack(int sock, struct sockaddr_in *addr)
     struct iphdr ip;
     struct tcphdr tcp;
 
-    memset(&packet, 0, sizeof(struct tcp_packet));
-
     while(1)
     {
         memset(&packet, 0, sizeof(struct tcp_packet));
@@ -140,7 +138,7 @@ int attack(int sock, struct sockaddr_in *addr)
         {
             perror("sendto ");
             return -1;
-        } 
+        }
     }
 }
 
