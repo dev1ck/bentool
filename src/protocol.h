@@ -232,7 +232,7 @@ int syn_flood(int argc, ...);
 
 uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);
-void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen);
+void make_ip_header(struct iphdr *iphdr, struct in_addr src_ip, struct in_addr dst_ip, uint16_t datalen, uint16_t id);
 void make_tcp_header(struct tcphdr *packet, struct in_addr src_ip, uint16_t src_port, struct in_addr dst_ip, uint16_t dst_port, uint32_t seq, uint32_t ack, uint8_t flag);
 int relay(uint8_t *dst_mac, char * if_name);
 int rst_packet_send(int argc, char **argv);

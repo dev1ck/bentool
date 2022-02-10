@@ -21,6 +21,7 @@ int half_open_scan(int args, ...)
     time_t start_tm = time(NULL), end_tm, play_tm;
     char* if_name;
     char buf[17];
+    char src[16], dst[16];
     
     struct sockaddr_in addr;
     struct in_addr my_ip;
@@ -39,7 +40,7 @@ int half_open_scan(int args, ...)
     param.end_port = end_port = (uint16_t)atoi(va_arg(ap, char*));
 
     tv.tv_sec = 2;
-    tv.tv_sec = 0;
+    tv.tv_usec = 0;
 
     if((param.sock = socket(PF_INET, SOCK_RAW, IPPROTO_TCP)) < 0)
     {
@@ -49,12 +50,12 @@ int half_open_scan(int args, ...)
 
     if(setsockopt(param.sock, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0)
     {
-        perror("setsockopt ");
+        perror("setsockopt1 ");
         return -1;
     }
     if((setsockopt(param.sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv)) < 0)
     {
-        perror("setsocket ");
+        perror("setsocket2 ");
         return -1;
     }
 
@@ -89,6 +90,10 @@ int half_open_scan(int args, ...)
 
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
                 
+                strncpy(src, inet_ntoa(param.src_ip), strlen(inet_ntoa(param.src_ip)));
+                strncpy(dst, inet_ntoa(param.dst_ip), strlen(inet_ntoa(param.dst_ip)));
+
+                printf("Send to TCP SYN flag Packet : %s ~ %s (%d ~ %d)\n", src, dst, start_port, end_port);
                 printf("\n===== Host List =====\n\n");  
 
                 for(; start_ip <= end_ip; start_ip++)
@@ -99,7 +104,7 @@ int half_open_scan(int args, ...)
                     for(port = start_port; port <= end_port; port++)
                     {
                         make_tcp_header(&packet.tcphdr, nic_info.addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
-                        make_ip_header(&packet.iphdr, nic_info.addr, addr.sin_addr, sizeof(struct tcphdr));
+                        make_ip_header(&packet.iphdr, nic_info.addr, addr.sin_addr, sizeof(struct tcphdr),rand());
 
                         if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
                         {
@@ -111,7 +116,8 @@ int half_open_scan(int args, ...)
                         if(port == end_port) break;
                     }   
                 }
-            } break;
+                break;
+            }
         case 4:
             {
                 inet_aton(va_arg(ap, char*), &addr.sin_addr);
@@ -121,12 +127,14 @@ int half_open_scan(int args, ...)
                 param.dst_ip.s_addr = addr.sin_addr.s_addr;
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
                 
+                printf("Send to TCP SYN flag Packet : %s (%d ~ %d)\n", inet_ntoa(addr.sin_addr), start_port, end_port);
+
                 printf("\n===== Host List =====\n\n");  
 
                 for(port = start_port; port <= end_port; port++)
                 {
                     make_tcp_header(&packet.tcphdr, nic_info.addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
-                    make_ip_header(&packet.iphdr, nic_info.addr, addr.sin_addr, sizeof(struct tcphdr));
+                    make_ip_header(&packet.iphdr, nic_info.addr, addr.sin_addr, sizeof(struct tcphdr),rand());
 
                     if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
                     {
@@ -137,8 +145,8 @@ int half_open_scan(int args, ...)
                     }
                     if(port == end_port) break;
                 }
-                
-            } break;
+                break;  
+            } 
         case 5:
             {    
                 
@@ -146,20 +154,20 @@ int half_open_scan(int args, ...)
                 param.dst_ip.s_addr = inet_addr(va_arg(ap, char*));
                 va_end(ap);
 
-                char src[16], dst[16];
+                
                 uint32_t start_ip, end_ip;
 
                 strncpy(src, inet_ntoa(param.src_ip), strlen(inet_ntoa(param.src_ip)));
                 strncpy(dst, inet_ntoa(param.dst_ip), strlen(inet_ntoa(param.dst_ip)));
 
-                printf("Send To TCP SYN Packet : %s ~ %s\n\n", src, dst);
+                printf("Send to TCP SYN flag Packet : %s ~ %s (%d ~ %d)\n", src, dst, start_port, end_port);
 
                 pthread_create(&thread_id, NULL, tcp_thread_function, &param);
                 
                 start_ip = ntohl(param.src_ip.s_addr);
                 end_ip = ntohl(param.dst_ip.s_addr);
                 
-                printf("===== Host List =====\n\n");  
+                printf("\n===== Host List =====\n\n");  
 
                 for(; start_ip <= end_ip; start_ip++)
                 {
@@ -169,7 +177,7 @@ int half_open_scan(int args, ...)
                     for(port = start_port; port <= end_port; port++)
                     {
                         make_tcp_header(&packet.tcphdr, nic_info.addr, rand(), addr.sin_addr, port, rand(), 0, TH_SYN);
-                        make_ip_header(&packet.iphdr, nic_info.addr, addr.sin_addr, sizeof(struct tcphdr));
+                        make_ip_header(&packet.iphdr, nic_info.addr, addr.sin_addr, sizeof(struct tcphdr),rand());
 
                         if(sendto(param.sock, &packet, sizeof(packet), 0, (struct sockaddr *)&addr, sizeof(addr)) < 0)
                         {
@@ -185,9 +193,6 @@ int half_open_scan(int args, ...)
                 }
                 break;
             }
-            break;
-        default:
-            break;
     }
     sleep(1);
     g_tcp_end_flag=1;
