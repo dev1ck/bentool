@@ -6,6 +6,9 @@
 #include <stdint.h>
 
 /*
+radiotap hdr는 리틀 엔디안
+
+
  설정
 
 
@@ -26,16 +29,6 @@ struct sequence_control {
 	uint16_t sequence:12;
 } __attribute__((__packed__));
 
-struct mgmt_frame {
-	struct frame_control fc;
-	uint16_t duration;
-	uint8_t  dest_mac[IFHWADDRLEN];
-	uint8_t  src_mac[IFHWADDRLEN];
-	uint8_t  bssid[IFHWADDRLEN];
-	struct sequence_control sc;
-	uint8_t  frame_body[];
-} __attribute__((__packed__));
-
 struct frame_control {
 	uint8_t protocol_version:2;
 	uint8_t type:2;
@@ -49,6 +42,17 @@ struct frame_control {
 	uint8_t protected_frame:1;
 	uint8_t order:1;
 } __attribute__((__packed__));
+
+struct mgmt_frame {
+	struct frame_control fc;
+	uint16_t duration;
+	uint8_t  dest_mac[IFHWADDRLEN];
+	uint8_t  src_mac[IFHWADDRLEN];
+	uint8_t  bssid[IFHWADDRLEN];
+	struct sequence_control sc;
+	uint8_t  frame_body[];
+} __attribute__((__packed__));
+
 
 //화면 지우기 함수
 void clear_scr() {
