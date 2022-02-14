@@ -5,6 +5,7 @@
 
 #include "../src/protocol.h"
 #include <linux/wireless.h>
+#include <malloc.h>
 
 #define ESSID_LEN 32
 
@@ -125,7 +126,10 @@ struct deauth_thread_args
 {
 	struct ap_list *apl;
 	struct iw_dev *dev;
+	char *SSID;
+	int ap_find_stop;
 	pthread_mutex_t *list_mutex;
+	pthread_mutex_t *ap_find_stop_mutex;
 };
 
 
