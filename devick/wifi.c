@@ -1,4 +1,5 @@
 #include "wifi.h"
+int g_wifi_end_signal = 0;
 
 void clear_scr()
 {
@@ -122,27 +123,35 @@ int iw_dev_set(struct iw_dev *dev)
 	return 0;
 }
 
-int iw_set_channel(struct iw_dev *dev, int chan)
-{	
-	struct iwreq iwr;
+void iw_dev_unset(struct iw_dev *dev)
+{
+	struct ifreq ifr;
 
-	/* set channel */
+	if (dev->fd_in == -1)
+		return;
 
-	memset(&iwr, 0, sizeof(iwr));
-	strncpy(iwr.ifr_name, dev->ifname, sizeof(iwr.ifr_name)-1);
-	
-	iwr.u.freq.flags = IW_FREQ_FIXED;
-	iwr.u.freq.m = chan;
+	if (dev->fd_out == -1)
+	{
+		close(dev->fd_in);
+		return;
+	}
 
-	if (ioctl(dev->fd_in, SIOCSIWFREQ, &iwr) < 0)
-    {
-        perror("ioctl(SIOCSIWFREQ) ");
-        return -1;
-    }		
-	dev->chan = chan;
+	if (dev->old_flags.ifr_name[0] != '\0') {
+		/* set interface down (ifr_flags = 0) */
+		memset(&ifr, 0, sizeof(ifr));
+		strncpy(ifr.ifr_name, dev->ifname, sizeof(ifr.ifr_name)-1);
+		ioctl(dev->fd_in, SIOCSIFFLAGS, &ifr);
+		/* restore old mode */
+		if (dev->old_mode.ifr_name[0] != '\0')
+			ioctl(dev->fd_in, SIOCSIWMODE, &dev->old_mode);
+		/* restore old flags */
+		ioctl(dev->fd_in, SIOCSIFFLAGS, &dev->old_flags);
+	}
 
-	return 0;
+	close(dev->fd_in);
+	close(dev->fd_out);
 }
+
 
 int get_ap_info(struct iw_dev *dev, struct ap_info *api)
 {
@@ -221,7 +230,7 @@ int get_ap_info(struct iw_dev *dev, struct ap_info *api)
 	return -1;
 }
 
-int add_or_update_ap(struct ap_list *apl, struct ap_info *api)
+int add_ap(struct ap_list *apl, struct ap_info *api)
 {
 	struct access_point *ap = apl->head;
 
@@ -257,8 +266,94 @@ int add_or_update_ap(struct ap_list *apl, struct ap_info *api)
 	return 0;
 }
 
+void free_ap_list(struct ap_list *apl)
+{
+	struct access_point *tmp;
+
+	while (apl->head != NULL) {
+		tmp = apl->head;
+		apl->head = apl->head->next;
+		free(tmp);
+	}
+
+	apl->head = apl->tail = NULL;
+}
+
+int iw_set_channel(struct iw_dev *dev, int chan)
+{	
+	struct iwreq iwr;
+
+	/* set channel */
+
+	memset(&iwr, 0, sizeof(iwr));
+	strncpy(iwr.ifr_name, dev->ifname, sizeof(iwr.ifr_name)-1);
+	
+	iwr.u.freq.flags = IW_FREQ_FIXED;
+	iwr.u.freq.m = chan;
+
+	if (ioctl(dev->fd_in, SIOCSIWFREQ, &iwr) < 0)
+    {
+        perror("ioctl(SIOCSIWFREQ) ");
+        return -1;
+    }		
+	dev->chan = chan;
+
+	return 0;
+}
+
 void channel_set(uint32_t *cs, uint8_t chan) { cs[chan/32] |= 1 << (chan % 32);}
 int channel_isset(uint32_t *cs, uint8_t chan) {return !!(cs[chan/32] & (1 << (chan % 32)));}
+
+int send_deauth(struct iw_dev *dev, struct access_point *ap)
+{
+	struct mgmt_frame *deauth;
+	uint16_t *reason;
+	ssize_t r;
+
+	deauth = malloc(sizeof(*deauth) + sizeof(*reason));
+	if (deauth == NULL)
+	{
+		perror("malloc ");
+		return -1;
+	}
+
+	memset(deauth, 0, sizeof(deauth));
+	deauth->fc.subtype = FRAME_CONTROL_SUBTYPE_DEAUTH;
+	/* broadcast mac (ff:ff:ff:ff:ff:ff) */
+	memset(deauth->dest_mac, '\xff', IFHWADDRLEN);
+	memcpy(deauth->src_mac, ap->info.bssid, IFHWADDRLEN);
+	memcpy(deauth->bssid, ap->info.bssid, IFHWADDRLEN);
+	reason = (uint16_t*)&deauth->frame_body;
+	/* reason 7: Class 3 frame received from nonassociated STA */
+	*reason = 7;
+
+	/* send deauth */
+	deauth->sc.sequence = ap->sequence++;
+	ap->sequence %= 4096;
+	do {
+		r = iw_write(dev, deauth, sizeof(*deauth) + sizeof(*reason));
+	} while (r == 0);
+	if (r < 0) {
+		free(deauth);
+		return r;
+	}
+
+	free(deauth);
+
+	return 0;
+}
+
+void INThandler(int sig)
+{
+    signal(sig, SIG_IGN);
+
+    g_wifi_end_signal = 1;
+}
+
+void *send_pack_thread(void *p)
+{
+
+}
 
 int main(int argc, char ** argv)
 {
@@ -291,9 +386,7 @@ int main(int argc, char ** argv)
 	{
 		chan = (chan % CHANNEL_MAX) + 1;
 		if (channel_isset(chans, chan))
-		{
 			ret = iw_set_channel(&dev, chan);
-		}
 		else
 			ret = -1;
 		/* if fails try next channel */
@@ -308,13 +401,14 @@ int main(int argc, char ** argv)
 	memset(&apl, 0, sizeof(apl));
 
 	tm = time(NULL);
-	s_tm = time(NULL);
 
-	while(time(NULL)-s_tm <=30)
+	signal(SIGINT, INThandler);
+
+	while(1)
 	{
 		if(get_ap_info(&dev, &api)==-1) continue;
 
-		add_or_update_ap(&apl, &api);
+		add_ap(&apl, &api);
 
 		n = 0;
 		if(time(NULL)-tm >= 1)
@@ -333,15 +427,22 @@ int main(int argc, char ** argv)
 				printf("error");
 				return -1;
 			}
-			tm=time(NULL);
 		}
+		if(g_wifi_end_signal)
+			break;
 	}
     struct access_point *ap = apl.head;
+	int count = 0;
 	while(ap!=NULL)
 	{
 		printf("chan : %d, SSID : %s\n",ap->info.chan, ap->info.essid);
 		ap = ap->next;
+		count++;
 	}
+
+	printf("\n\"%d\" wifi founds\n",count);
+	iw_dev_unset(&dev);
+	free_ap_list(&apl);
 
     return 0;
 }
