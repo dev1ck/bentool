@@ -17,6 +17,11 @@
 
 #define CHANNEL_MAX 255
 
+#define RADIOTAP_F_PRESENT_RATE	(1<<2)
+#define RADIOTAP_F_PRESENT_TX_FLAGS	(1<<15)
+#define RADIOTAP_F_TX_FLAGS_NOACK	0x0008
+#define RADIOTAP_F_TX_FLAGS_NOSEQ	0x0010
+
 struct ap_info {
 	int chan;
 	uint8_t bssid[IFHWADDRLEN];
@@ -28,6 +33,12 @@ struct radiotap_hdr {
 	uint8_t  pad;
 	uint16_t len;
 	uint32_t present;
+} __attribute__((__packed__));
+
+struct write_radiotap_data {
+	uint8_t  rate;
+	uint8_t  pad;
+	uint16_t tx_flags;
 } __attribute__((__packed__));
 
 struct frame_control {
@@ -75,7 +86,16 @@ struct info_element
 	uint8_t info[];
 } __attribute__((__packed__));
 
-struct iw_dev {
+struct deauth_packet
+{
+	struct radiotap_hdr rt_hdr;
+	struct write_radiotap_data w_rt_data;
+	struct mgmt_frame deauth;
+	
+} __attribute__((__packed__));
+
+struct iw_dev
+{
 	char ifname[IFNAMSIZ+1];
 	int ifindex;
 	int fd_in;
@@ -85,7 +105,8 @@ struct iw_dev {
 	struct iwreq old_mode;
 };
 
-struct access_point {
+struct access_point
+{
 	volatile unsigned int num_of_deauths;
 	time_t last_beacon_tm;
 	uint16_t sequence:12;
@@ -94,10 +115,19 @@ struct access_point {
 	struct access_point *prev;
 };
 
-struct ap_list {
+struct ap_list
+{
 	struct access_point *head;
 	struct access_point *tail;
 };
+
+struct deauth_thread_args
+{
+	struct ap_list *apl;
+	struct iw_dev *dev;
+	pthread_mutex_t *list_mutex;
+};
+
 
 
 

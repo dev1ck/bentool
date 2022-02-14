@@ -1,3 +1,6 @@
+#ifndef _USAGES_H
+#define _USAGES_H
+
 #pragma once
 #include <stdio.h>
 
@@ -9,3 +12,5 @@ void usage_sp();
 void usage_sh();
 void usage_pa();
 void usage_as();
+
+#endif

