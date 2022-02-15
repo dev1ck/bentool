@@ -38,6 +38,12 @@ void usage_help()
     printf("\n[Syn flood attack]\n");
     printf("./bentool -aS <target IP or Domain/port>\n");
     printf("./bentool -aS <target IP> <port> [-l <attack_level>] [-if <interface_name>]\n"); 
+
+    printf("\n[Wi-Fi AP scan]\n");
+    printf("./bentool -sW <interface_name> <[-c <Wi-Fi channel>]\n"); 
+
+    printf("\n[Wi-Fi deauth attack]\n");
+    printf("./bentool -aW <interface_name> <[-c <Wi-Fi channel>] or [-e <Wi-Fi SSID>]>\n"); 
 }
 
 void usage_i()
@@ -79,6 +85,14 @@ void usage_sh()
     printf("ex) ./bentool -sH 192.168.0.1 192.168.0.255 -p 10 100 -if eth1\n");
 }
 
+void usage_sw()
+{
+    printf("\n[Wi-Fi AP scan]\n");
+    printf("./bentool -sW <interface_name> [-c <Wi-Fi channel>]\n\n");
+    printf("ex) ./bentool -i wlan0\n");
+    printf("ex) ./bentool -i wlan0 -c 13\n");
+}
+
 void usage_pa()
 {
     printf("\n[ARP Spoofing]\n");
@@ -94,4 +108,15 @@ void usage_as()
     printf("[-l] option is express attack strength,\nyou can decide from 1 to 20. (default level:12)\n\n");
     printf("ex) ./bentool -aS www.bentool.com:80 -l 10\n");
     printf("ex) ./bentool -aS 192.168.0.7 80\n");
+}
+
+void usage_aw()
+{
+    printf("\n[Wi-Fi deauth attack]\n");
+    printf("./bentool -aW <interface name> <[-c <Wi-Fi channel>] or [-e <Wi-Fi SSID>]>\n\n"); 
+    printf("[-c] option designate Wi-Fi channel,\nyou can decide from 1 to 255.\n\n");
+    printf("[-e] option designate Wi-Fi SSID,\n\n");
+    printf("ex) ./bentool -aW wlan0 -c 4\n");
+    printf("ex) ./bentool -aW wlan0 -e wifi_ssid_5G\n");
+    printf("ex) ./bentool -aW wlan0 -c 161 -e wifi_ssid_5G\n");
 }

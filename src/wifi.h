@@ -132,4 +132,23 @@ struct deauth_thread_args
 	pthread_mutex_t *ap_find_stop_mutex;
 };
 
+void iw_init_dev(struct iw_dev *dev);
+int iw_dev_set(struct iw_dev *dev);
+void iw_dev_unset(struct iw_dev *dev);
+int iw_set_channel(struct iw_dev *dev, int chan);
+
+void make_deauth_packet(struct deauth_packet **packet, struct iw_dev *dev, struct access_point *ap);
+int send_deauth(struct iw_dev *dev, struct access_point *ap);
+
+void channel_set(uint32_t *cs, uint8_t chan);
+int channel_isset(uint32_t *cs, uint8_t chan);
+
+int add_ap(struct ap_list *apl, struct ap_info *api);
+int get_ap_info(struct iw_dev *dev, struct ap_info *api);
+void free_ap_list(struct ap_list *apl);
+
+void clear_scr();
+void update_scr(struct ap_list *apl, struct iw_dev *dev);
+
+
 #endif

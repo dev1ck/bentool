@@ -31,12 +31,6 @@
 #define ARP_MAX_LEN 42
 #define ETHERTYPE_IP 0x0800
 #define PSEUDO_HEADER_LEN 12
-#define I 0x0001
-#define sA 0x0002
-#define sP 0x0004
-#define sH 0x0008
-#define pA 0x0010
-#define aS 0x0020
 
 struct nic_info
 {
@@ -228,7 +222,9 @@ int arp_scan(int argc, ...);
 int arp_spoof(char *i_if_name, char *i_target_ip, char *i_host_IP);
 int ping_scan(int args, ...);
 int half_open_scan(int args, ...);
+int wifi_scan(char* ifname, char* input_chan);
 int syn_flood(int argc, ...);
+int wifi_jammer(char* ifname, char* SSID, char* input_chan);
 
 uint8_t* make_arp_request_packet(uint8_t source_mac[6], struct in_addr source_ip, struct in_addr target_ip);
 uint8_t* make_arp_reply_packet(uint8_t source_mac[6], struct in_addr source_ip, uint8_t target_mac[6], struct in_addr target_ip);

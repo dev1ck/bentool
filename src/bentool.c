@@ -6,6 +6,14 @@
 #define START_PORT "0"
 #define END_PORT "1023"
 
+#define I 0x0001
+#define sA 0x0002
+#define sP 0x0004
+#define sH 0x0008
+#define sW 0x0010
+#define pA 0x0020
+#define aS 0x0030
+#define aW 0x0040
 
 struct opt_status
 {
@@ -13,13 +21,14 @@ struct opt_status
     int s_arg;
     int argc;
 };
+
 // 하나의 서브 옵션을 쓰는 메인 옵션이 많을 때 유용한 함수
 // 메인옵션과 서브옵션의 잘못된 매칭을 확인하는 함수
-int check_sub_option(int argc, char ** argv, char** main_opts, char* sub_opt) 
+int check_sub_option(int argc, char ** argv, char** main_opts, char* sub_opt, int size)
 {
     int is_main_opt=0, is_sub_opt=0;
     //printf("check argv[1] : %s argv[2] : %s , argv[3] : %s\n", argv[1],argv[2],argv[3]);
-    for(int i=0 ; i<(sizeof(main_opts)/sizeof(char*)) ; i++)
+    for(int i=0 ; i<size ; i++)
     {
         for(int j=1; j < argc; j++)
         {
@@ -69,13 +78,17 @@ int bentool_main(int argc, char **argv)
 {
     struct opt_status main_opt;
     char c;
-    int i_flag;
+    int i_flag, sub_opt_count=0;
     char *if_name = IF_NAME;
     char *start_port = START_PORT;
     char *end_port = END_PORT;
     char *attack_level = THREAD_NUM;
+    char *wifi_chan = NULL;
+    char *wifi_ssid = NULL;
     char* ck_sub_opt_p[] = {"-sH"}; // p option
     char* ck_sub_opt_l[] = {"-aS"}; // l option
+    char* ck_sub_opt_c[] = {"-aW","-sW"}; // c option
+    char* ck_sub_opt_e[] = {"-aW"}; // e option
     char **argv2 = (char**)malloc(sizeof(char*)*argc);
 
     for(int i = 0 ; i<argc ; i++)
@@ -84,18 +97,28 @@ int bentool_main(int argc, char **argv)
     memset(&main_opt, 0 ,sizeof(struct opt_status));
     main_opt.argc=1;
 
-    if(check_sub_option(argc, argv, ck_sub_opt_p, "-p") <0)
+    if(check_sub_option(argc, argv, ck_sub_opt_p, "-p", sizeof(ck_sub_opt_p)/sizeof(char*)) <0)
     {
         printf("-p option enable -sH option\n");
         return -1;
     }
-    if(check_sub_option(argc, argv, ck_sub_opt_l, "-l") <0)
+    if(check_sub_option(argc, argv, ck_sub_opt_l, "-l", sizeof(ck_sub_opt_l)/sizeof(char*)) <0)
     {
         printf("-l option enable -aS option\n");
         return -1;
     }
+    if(check_sub_option(argc, argv, ck_sub_opt_c, "-c", sizeof(ck_sub_opt_c)/sizeof(char*)) <0)
+    {
+        printf("-c option enable -sW, -aW options\n");
+        return -1;
+    }
+    if(check_sub_option(argc, argv, ck_sub_opt_e, "-e", sizeof(ck_sub_opt_e)/sizeof(char*)) <0)
+    {
+        printf("-e option enable -aW option\n");
+        return -1;
+    }
 
-    while((c=getopt(argc,argv,"i::s::p::a::l::h::"))!=-1)
+    while((c=getopt(argc,argv,"i::s::p::a::l::h::c::e::"))!=-1)
     {
         switch(c)
         {
@@ -179,9 +202,9 @@ int bentool_main(int argc, char **argv)
                         usage();
                         return -1;
                     }
-                    int if_c = opt_count(NULL, optind, argc, argv);
+                    sub_opt_count = opt_count(NULL, optind, argc, argv);
 
-                    switch(if_c)
+                    switch(sub_opt_count)
                     {
                         case 0:
                             printf("Input interface name\n");
@@ -230,6 +253,10 @@ int bentool_main(int argc, char **argv)
                         main_opt.flag+=sH; // flag[sH] 플래그 on
                         main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
                         break;
+                    case 'W':
+                        main_opt.flag+=sW; // flag[sW] 플래그 on
+                        main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                        break;
                     default:
                         printf("\"%s\" option is undefined.\n",argv[optind-1]);
                         usage();
@@ -240,9 +267,9 @@ int bentool_main(int argc, char **argv)
             case 'p':
                 if(!optarg)
                 {   
-                    int p_c = opt_count(NULL, optind, argc, argv);
+                    sub_opt_count = opt_count(NULL, optind, argc, argv);
                     
-                    switch(p_c)
+                    switch(sub_opt_count)
                     {
                         case 0:
                             printf("Input Port Number\n");
@@ -300,6 +327,10 @@ int bentool_main(int argc, char **argv)
                         main_opt.flag=aS; // flag[aS] 플래그 on
                         main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
                         break;
+                    case 'W':
+                        main_opt.flag=aW; // flag[aW] 플래그 on
+                        main_opt.argc += opt_count(&main_opt.s_arg, optind, argc, argv);
+                        break;
                     default:
                         printf("\"%s\" option is undefined.\n",argv[optind-1]);
                         usage();
@@ -310,9 +341,9 @@ int bentool_main(int argc, char **argv)
             case 'l':
                 if(!optarg)
                 {   
-                    int l_c = opt_count(NULL, optind, argc, argv);
+                    sub_opt_count = opt_count(NULL, optind, argc, argv);
                     
-                    switch(l_c)
+                    switch(sub_opt_count)
                     {
                         case 0:
                             printf("Input attack level\n");
@@ -328,7 +359,66 @@ int bentool_main(int argc, char **argv)
                     }
                     break;
                 }
-                
+                else
+                {
+                    printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                    usage();
+                    return -1;
+                }
+            case 'c':
+                if(!optarg)
+                {   
+                    sub_opt_count = opt_count(NULL, optind, argc, argv);
+                    
+                    switch(sub_opt_count)
+                    {
+                        case 0:
+                            printf("Input Wi-Fi channel\n");
+                            usage_aw();
+                            return -1;
+                        case 1:
+                            wifi_chan = argv[optind];
+                            break;
+                        default:
+                            printf("Too many arguments used for [-c]");
+                            usage_as();
+                            return -1;
+                    }
+                    break;
+                }
+                else
+                {
+                    printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                    usage();
+                    return -1;
+                }
+            case 'e':
+                if(!optarg)
+                {   
+                    sub_opt_count = opt_count(NULL, optind, argc, argv);
+                    
+                    switch(sub_opt_count)
+                    {
+                        case 0:
+                            printf("Input Wi-Fi SSID\n");
+                            usage_aw();
+                            return -1;
+                        case 1:
+                            wifi_ssid = argv[optind];
+                            break;
+                        default:
+                            printf("Too many arguments used for [-e]");
+                            usage_aw();
+                            return -1;
+                    }
+                    break;
+                }
+                else
+                {
+                    printf("\"%s\" option is undefined.\n",argv[optind-1]);
+                    usage();
+                    return -1;
+                }  
             // error
             case '?':
                 return -1;
@@ -409,9 +499,29 @@ int bentool_main(int argc, char **argv)
                     return -1;
             }
             break;
+        case sW:
+            main_opt.argc--;
+            switch(main_opt.argc)
+            {
+                case 0:
+                    printf("Input interface name\n");
+                    usage_sw();
+                case 1:
+                    wifi_scan(argv2[main_opt.s_arg], wifi_chan);
+                    break;
+                default:
+                    printf("Too many arguments used for [-sW]\n");
+                    usage_sw();
+                    return -1;
+            }
+            break;
         case pA:
             switch(main_opt.argc)
             {
+                case 1:
+                case 2:
+                    usage_pa();
+                    return -1;
                 case 3:
                     arp_spoof(if_name, argv2[main_opt.s_arg], argv2[main_opt.s_arg+1]);
                     break;
@@ -433,6 +543,28 @@ int bentool_main(int argc, char **argv)
                 default:
                     printf("Too many arguments used for [-aS]\n");
                     usage_as();
+                    return -1;
+            }
+            break;
+        case aW:
+            main_opt.argc--;
+            if(!sub_opt_count)
+            {
+                printf("[-c] or [-e] option must use\n");
+                usage_aw();
+                return -1;
+            }
+            switch(main_opt.argc)
+            {
+                case 0:
+                    printf("Input interface name\n");
+                    usage_aw();
+                case 1:
+                    wifi_jammer(argv2[main_opt.s_arg], wifi_ssid, wifi_chan);
+                    break;
+                default:
+                    printf("Too many arguments used for [-aW]\n");
+                    usage_aw();
                     return -1;
             }
             break;

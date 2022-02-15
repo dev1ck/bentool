@@ -10,7 +10,9 @@ void usage_i();
 void usage_sa();
 void usage_sp();
 void usage_sh();
+void usage_sw();
 void usage_pa();
 void usage_as();
+void usage_aw();
 
 #endif
