@@ -65,7 +65,7 @@ int wifi_jammer(char* ifname, char* SSID, char* input_chan)
 	}
 
 	if(SSID!=NULL)
-		printf("\n===== Start founding AP(\"%s\")... =====\n\n",SSID);	
+		printf("\n===== Start founding AP (\"%s\")... =====\n\n",SSID);	
 
 	memset(&api, 0, sizeof(api));
 	memset(&apl, 0, sizeof(apl));
@@ -151,7 +151,7 @@ void *deauth_thread(void *arg)
 	if(ta->SSID == NULL)
 	{
 		clear_scr();
-   	 	update_scr(ta->apl, ta->dev);
+   	 	attack_update_scr(ta->apl, ta->dev);
 	}
 	while (!g_wifi_end_signal)
 	{
@@ -168,7 +168,7 @@ void *deauth_thread(void *arg)
 
 				if (msec >= 500000) 
 				{
-					update_scr(ta->apl, ta->dev);
+					attack_update_scr(ta->apl, ta->dev);
 					gettimeofday(&p_tv, NULL);
 				}
 				if(ap->info.chan == ta->dev->chan)
@@ -178,8 +178,8 @@ void *deauth_thread(void *arg)
 			{
 				if(!strcmp(ap->info.essid, ta->SSID))
 				{
-					printf("\"%s\" found AP!!\n\n",ap->info.essid);
-					printf("===== Start Wi-Fi jamming attack... (\"%s\"[CH:%d]) =====\n\n",ta->SSID, ap->info.chan);
+					printf("Found AP!!\n\n");
+					printf("===== ([CH %d] \"%s\") Start Wi-Fi jamming... =====\n\n",ap->info.chan, ta->SSID);
 
 					pthread_mutex_lock(ta->ap_find_stop_mutex);
 					ta->ap_find_stop =1;

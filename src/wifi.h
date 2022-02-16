@@ -148,7 +148,8 @@ int get_ap_info(struct iw_dev *dev, struct ap_info *api);
 void free_ap_list(struct ap_list *apl);
 
 void clear_scr();
-void update_scr(struct ap_list *apl, struct iw_dev *dev);
+void scan_update_scr(struct ap_list *apl, struct iw_dev *dev);
+void attack_update_scr(struct ap_list *apl, struct iw_dev *dev);
 
 
 #endif

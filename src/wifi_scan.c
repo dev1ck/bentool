@@ -69,7 +69,7 @@ int wifi_scan(char* ifname, char* input_chan)
 	signal(SIGINT, INTwifiScanHandler);
 
     clear_scr();
-    update_scr(&apl, &dev);
+    scan_update_scr(&apl, &dev);
 
 	gettimeofday(&s_tv, NULL);
     gettimeofday(&p_tv, NULL);
@@ -94,7 +94,7 @@ int wifi_scan(char* ifname, char* input_chan)
 			p_msec = p_tv.tv_usec - p_tv2.tv_usec;
 
         if (p_msec >= 500000) {
-			update_scr(&apl, &dev);
+			scan_update_scr(&apl, &dev);
 			gettimeofday(&p_tv, NULL);
 		}
 

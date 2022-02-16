@@ -356,14 +356,16 @@ void clear_scr()
 	fflush(stdout);
 }
 
-void update_scr(struct ap_list *apl, struct iw_dev *dev)
+void scan_update_scr(struct ap_list *apl, struct iw_dev *dev)
 {
 	struct access_point *ap;
 
 	/* move cursor at colum 1 row 1 */
-	printf("\033[1;1H\n");
-	printf("   CH   "
-	       "BSSID              "
+	printf("\033[1;1H");
+
+	printf("\n========== [CH %3d] Wi-Fi scanning... ==========\n\n", dev->chan);
+	printf("   CH    "
+	       "BSSID                "
 	       "ESSID\n\n");
 
 	ap = apl->head;
@@ -372,13 +374,46 @@ void update_scr(struct ap_list *apl, struct iw_dev *dev)
 		printf("\033[2K");
 
 		printf("%5d", ap->info.chan);
-		printf("   %02x:%02x:%02x:%02x:%02x:%02x", ap->info.bssid[0],
+		printf("    %02x:%02x:%02x:%02x:%02x:%02x", ap->info.bssid[0],
 		       ap->info.bssid[1], ap->info.bssid[2], ap->info.bssid[3],
 		       ap->info.bssid[4], ap->info.bssid[5]);
 		if (ap->info.essid[0] == '\0') {
-			printf("  <hidden>\n");
+			printf("    <hidden>\n");
 		} else
-			printf("  %s\n", ap->info.essid);
+			printf("    %s\n", ap->info.essid);
+		ap = ap->next;
+	}
+
+	/* clear screen from cursor to end of display */
+	printf("\033[J");
+	fflush(stdout);
+}
+
+void attack_update_scr(struct ap_list *apl, struct iw_dev *dev)
+{
+	struct access_point *ap;
+
+	/* move cursor at colum 1 row 1 */
+	printf("\033[1;1H");
+
+	printf("\n========== [CH %d] Wi-Fi jamming... ==========\n\n", dev->chan);
+	printf("   CH    "
+	       "BSSID                "
+	       "ESSID\n\n");
+
+	ap = apl->head;
+	while (ap != NULL) {
+		/* erase whole line */
+		printf("\033[2K");
+
+		printf("%5d", ap->info.chan);
+		printf("    %02x:%02x:%02x:%02x:%02x:%02x", ap->info.bssid[0],
+		       ap->info.bssid[1], ap->info.bssid[2], ap->info.bssid[3],
+		       ap->info.bssid[4], ap->info.bssid[5]);
+		if (ap->info.essid[0] == '\0') {
+			printf("    <hidden>\n");
+		} else
+			printf("    %s\n", ap->info.essid);
 		ap = ap->next;
 	}
 
