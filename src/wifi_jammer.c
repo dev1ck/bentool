@@ -172,7 +172,11 @@ void *deauth_thread(void *arg)
 					gettimeofday(&p_tv, NULL);
 				}
 				if(ap->info.chan == ta->dev->chan)
+				{
 					send_deauth(ta->dev, ap);
+					//usleep(5000);
+				}
+					
 			}
 			else
 			{
@@ -187,7 +191,10 @@ void *deauth_thread(void *arg)
 					pthread_mutex_unlock(ta->ap_find_stop_mutex);
 
 					while(!g_wifi_end_signal)
+					{
 						send_deauth(ta->dev, ap);
+						//usleep(5000);
+					}	
 				}
 			}
 			ap = ap->next;
