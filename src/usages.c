@@ -97,7 +97,7 @@ void usage_pa()
 {
     printf("\n[ARP Spoofing]\n");
     printf("./bentool -pA <target IP> <host IP> [-if <inerface_name>]\n\n");
-    printf("ex) ./bentool -pS 192.168.0.20 192.168.0.1\n");
+    printf("ex) ./bentool -pA 192.168.0.20 192.168.0.1\n");
 }
 
 void usage_as()
