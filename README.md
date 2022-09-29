@@ -14,18 +14,18 @@ scons
 
 # Usage
 ### [Syntax]
-./bentool <option> [parameter]\n
+./bentool <option> [parameter]  
 
 ### [Help Message]
-./bentool -h
+./bentool -h  
 
 ### [Print network interface information]
-./bentool -i [<interface_name>]
+./bentool -i [<interface_name>]  
     
 ### [ARP Scan]
-./bentool -sA [-if <interface_name>]
-./bentool -sA <target IP> [-if <interface_name>]
-./bentool -sA <start IP> <end IP> [-if <interface_name>]
+./bentool -sA [-if <interface_name>]. 
+./bentool -sA <target IP> [-if <interface_name>]. 
+./bentool -sA <start IP> <end IP> [-if <interface_name>]. 
 
 ### [ICMP Scan]
 ./bentool -sP [-if interface_name]
