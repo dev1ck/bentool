@@ -1,3 +1,3 @@
 env = Environment(LIBPATH='/usr/include', LIBS=['pthread', 'pcap'])
-env.Program('bentool', Glob('*.c'))
+env.Program('bentool', Glob('lib/*.c'))
 

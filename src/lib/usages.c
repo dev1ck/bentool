@@ -33,7 +33,7 @@ void usage_help()
     printf("./bentool -sH <start IP> <end IP> [-p <port> [end_port]] [-if <intrface_name>]\n");
 
     printf("\n[ARP Spoofing]\n");
-    printf("./bentool -pS <target IP> <host IP> [-if <inerface_name>]\n");
+    printf("./bentool -pA <target IP> <host IP> [-if <inerface_name>]\n");
 
     printf("\n[Syn flood attack]\n");
     printf("./bentool -aS <target IP or Domain/port>\n");
