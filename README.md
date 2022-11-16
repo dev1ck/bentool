@@ -4,6 +4,7 @@
 
 # Install
 ```
+sudo apt update
 sudo apt install scons
 sudo apt install libpcap-dev
 cd bentool/src
