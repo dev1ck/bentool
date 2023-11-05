@@ -3,7 +3,7 @@
 간단한 명령어로 쉽게 사용 가능한 Linux Network tool
 
 <aside>
-💡 Bentool은 호스트 및 액세스 포인트(AP) 정보를 수집하기 위해 ARP 스캔, ICMP 스캔, TCP 스캔, Wi-Fi 스캔 등의 다양한 네트워크 스캐닝 기능을 제공합니다. 또한 ARP 스푸핑, SYN 플러딩, Wi-Fi 재밍 등의 네트워크 공격 기법을 실행할 수 있는 Network tool로 입니다.
+💡 Bentool은 호스트 및 액세스 포인트(AP) 정보를 수집하기 위해 ARP 스캔, ICMP 스캔, TCP 스캔, Wi-Fi 스캔 등의 다양한 네트워크 스캐닝 기능을 제공합니다. 또한 ARP 스푸핑, SYN 플러딩, Wi-Fi 재밍 등의 네트워크 공격 기법을 실행할 수 있는 Network tool 입니다.
 </aside>
 
 ### 시연 영상
