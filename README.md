@@ -1,4 +1,4 @@
-# bentool(Being Network Tool)
+# bentool (Being Network Tool)
 
 간단한 명령어로 쉽게 사용 가능한 Linux Network tool
 
