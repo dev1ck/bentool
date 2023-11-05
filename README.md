@@ -10,6 +10,7 @@
 
 [https://www.youtube.com/watch?v=LfIhu9Ai0K8&t=5s](https://www.youtube.com/watch?v=LfIhu9Ai0K8&t=5s)
 
+<br/>
 
 ## 🛠️ 사용 기술 및 라이브러리
 
@@ -17,6 +18,7 @@
 - Kali Linux
 - pcap, pthread
 
+<br/>
 
 ## ⚙️ 주요 기능
 
@@ -30,6 +32,7 @@
 - 주변 Wi-Fi (AP) 스캔
 - 지정한 채널, 혹은 지정한 SSID로의 Wi-Fi 재밍 공격
 
+<br/>
 
 ## ⭐차별성
 
@@ -37,9 +40,11 @@
 
 ![슬라이드25](https://github.com/dev1ck/bentool/assets/96347313/fa03ad16-1c8c-4e26-a624-2772a2ae0567)
 
+<br/>
 
 ---
 
+<br/>
 
 # How To Use
 
