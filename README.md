@@ -39,7 +39,7 @@
 
 # How To Use
 
-# Install
+## Install
 
 ```
 sudo apt update
@@ -49,7 +49,7 @@ cd bentool/src
 scons
 ```
 
-# Usage
+## Usage
 
 ### [Syntax]
 
