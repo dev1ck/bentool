@@ -8,7 +8,7 @@
 
 ### 시연 영상
 
-[![Bentool 시연 영상]](http://img.youtube.com/vi/LfIhu9Ai0K8/0.jpg)(https://www.youtube.com/watch?v=LfIhu9Ai0K8&t=0s)
+![Bentool 시연 영상](http://img.youtube.com/vi/LfIhu9Ai0K8/0.jpg)(https://www.youtube.com/watch?v=LfIhu9Ai0K8&t=0s)
 
 <br/>
 
